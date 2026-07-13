@@ -10,6 +10,10 @@ val Branco = Color(0xFFFFFFFF)
 val CinzaFundo = Color(0xFFF5F8FD)
 val TextoEscuro = Color(0xFF1A1C1E)
 
+// Verde de "trabalhando" (entrada na linha do tempo, chip de status)
+val VerdeTrabalho = Color(0xFF2E7D32)
+val VerdeClaro = Color(0xFF81C784)
+
 // Paleta escura
 val AzulClaro = Color(0xFF90CAF9)
 val AzulContainerEscuro = Color(0xFF1E3A5F)

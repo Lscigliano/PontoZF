@@ -7,7 +7,8 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 ## Funcionalidades
 
 ### Registro de ponto (aba Hoje)
-- **Registrar Ponto com um toque**: grava exatamente a hora atual do celular (ex.: `08:00`, `12:00`, `13:05`).
+- **Painel do dia**: chip de situação com cor semântica (verde "Trabalhando desde 08:01", âmbar "Em intervalo", azul "Jornada concluída") e três cartões de resumo — **Trabalhado**, **Restante** e **Fim previsto** — atualizados ao vivo.
+- **Registrar Ponto com um toque**: botão em destaque com ícone (que vira uma digital quando a biometria está ativa); grava exatamente a hora atual do celular.
 - **Confirmação por digital (opcional)**: com a opção ativa (aba Ajustes), o leitor de digital aparece na tela e o ponto só é gravado após reconhecer a digital. Se o aparelho não tiver biometria disponível, o registro é liberado normalmente.
 - **Bloqueio de retorno de intervalo**: o retorno do almoço exige no mínimo **1 hora e 1 minuto** de descanso (saiu 12:00 → só volta a partir de 13:01). Antes disso o registro é bloqueado, sem exceção — o app informa o horário liberado.
 - **Proteção contra toque duplo**: registros com menos de 1 minuto de diferença são bloqueados.
@@ -45,6 +46,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.7** | Visual profissional: painel do dia (chip de status + cartões Trabalhado/Restante/Fim previsto), botão de registro redesenhado, verde/âmbar semânticos, contagem de dias no Histórico e ícones tonais nos Ajustes |
 | **1.6** | Ajuste do dia pelos 4 períodos fixos (Entrada, Saída almoço, Retorno almoço, Saída trabalho) com validação; app fecha sozinho ao baixar atualização |
 | **1.5.6** | Horário do registro manual digitado pelo teclado (TimeInput); linha "Jornada configurada" na seção Sobre |
 | **1.5.5** | Correção definitiva do travamento na abertura: fragment 1.8.4 forçado (o 1.2.5 da lib de biometria quebrava o pedido de permissão de notificações) |

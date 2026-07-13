@@ -112,13 +112,19 @@ fun ConteudoHistorico(pontos: List<Ponto>, modifier: Modifier = Modifier) {
                         .padding(top = 12.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        mes.format(FormatoMes).replaceFirstChar { it.uppercase(LocalePtBr) },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            mes.format(FormatoMes).replaceFirstChar { it.uppercase(LocalePtBr) },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            if (porDia.size == 1) "1 dia registrado" else "${porDia.size} dias registrados",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
                     Text(
                         totalDoMes.formatar(),
                         style = MaterialTheme.typography.labelLarge,

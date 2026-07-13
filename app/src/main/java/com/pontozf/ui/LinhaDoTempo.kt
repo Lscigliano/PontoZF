@@ -33,11 +33,9 @@ import androidx.compose.ui.unit.dp
 import com.pontozf.data.Ponto
 
 /** Jornada de 8h48 (compensação do sábado), com intervalo mínimo de 1h01 após 4h de turno. */
-private const val JORNADA_MS = (8 * 60 + 48) * 60 * 1000L
+internal const val JORNADA_MS = (8 * 60 + 48) * 60 * 1000L
 private const val TURNO_ATE_INTERVALO_MS = 4 * 60 * 60 * 1000L
 private const val INTERVALO_PADRAO_MS = 61 * 60 * 1000L
-
-private val VerdeEntrada = Color(0xFF43A047)
 
 internal sealed interface ItemLinha {
     data class Registro(val ponto: Ponto, val entrada: Boolean, val destaque: Boolean) : ItemLinha
@@ -49,6 +47,23 @@ private fun formatarHm(ms: Long): String {
     val minutos = ms / 60_000
     return "%02dh %02dm".format(minutos / 60, minutos % 60)
 }
+
+/** Horas trabalhadas até [agora], incluindo o turno em aberto. */
+internal fun trabalhadoComAndamento(pontosHoje: List<Ponto>, agora: Long): java.time.Duration {
+    val ordenados = pontosHoje.sortedBy { it.timestamp }
+    var total = totalTrabalhado(ordenados).toMillis()
+    if (ordenados.size % 2 == 1) {
+        total += (agora - ordenados.last().timestamp).coerceAtLeast(0)
+    }
+    return java.time.Duration.ofMillis(total)
+}
+
+/** Horário previsto para o fim da jornada, ou null se concluída/sem registros. */
+internal fun previsaoFimDaJornada(pontosHoje: List<Ponto>): Long? =
+    montarLinhaDoTempo(pontosHoje)
+        .filterIsInstance<ItemLinha.Previsao>()
+        .lastOrNull()
+        ?.timestamp
 
 /**
  * Monta a linha do tempo do dia: os pontos batidos, a duração de cada
@@ -170,7 +185,7 @@ private fun NoRegistro(
     ultimo: Boolean,
     aoExcluir: (Ponto) -> Unit
 ) {
-    val cor = if (item.entrada) VerdeEntrada else MaterialTheme.colorScheme.error
+    val cor = if (item.entrada) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
     LinhaComTrilha(
         primeiro = primeiro,
         ultimo = ultimo,

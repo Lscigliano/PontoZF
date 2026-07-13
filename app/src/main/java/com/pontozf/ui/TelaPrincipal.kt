@@ -2,22 +2,37 @@ package com.pontozf.ui
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +41,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -39,6 +55,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -144,6 +162,7 @@ fun TelaPrincipal(
         when (abaAtual) {
             Aba.HOJE -> ConteudoHoje(
                 pontos = pontos,
+                biometriaAtiva = biometriaAtiva,
                 aoRegistrar = { registrarComConfirmacao() },
                 aoExcluir = { pontoParaExcluir = it },
                 modifier = Modifier.padding(padding)
@@ -233,12 +252,26 @@ fun TelaPrincipal(
 @Composable
 private fun ConteudoHoje(
     pontos: List<Ponto>,
+    biometriaAtiva: Boolean,
     aoRegistrar: () -> Unit,
     aoExcluir: (Ponto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hoje = LocalDate.now()
     val pontosHoje = pontos.filter { it.timestamp.paraDataLocal() == hoje }.sortedBy { it.timestamp }
+
+    // Atualiza os cartões de resumo a cada 30s enquanto há turno aberto.
+    var agora by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(pontosHoje.size) {
+        while (true) {
+            agora = System.currentTimeMillis()
+            delay(30_000)
+        }
+    }
+
+    val trabalhado = trabalhadoComAndamento(pontosHoje, agora)
+    val restanteMs = (JORNADA_MS - trabalhado.toMillis()).coerceAtLeast(0)
+    val fimPrevisto = previsaoFimDaJornada(pontosHoje)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -248,57 +281,164 @@ private fun ConteudoHoje(
         item { Relogio() }
 
         item {
+            Spacer(Modifier.height(12.dp))
+            ChipEstado(pontosHoje = pontosHoje, trabalhado = trabalhado)
+        }
+
+        item {
             Button(
                 onClick = aoRegistrar,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
-                    .height(72.dp),
+                    .height(64.dp),
+                shape = RoundedCornerShape(20.dp),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 3.dp,
+                    pressedElevation = 8.dp
+                ),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text("REGISTRAR PONTO", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = if (biometriaAtiva) Icons.Default.Fingerprint else Icons.Default.TouchApp,
+                    contentDescription = null
+                )
+                Spacer(Modifier.width(12.dp))
+                Text("REGISTRAR PONTO", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TileResumo("Trabalhado", trabalhado.formatar())
+                TileResumo("Restante", java.time.Duration.ofMillis(restanteMs).formatar())
+                TileResumo("Fim previsto", fimPrevisto?.paraHora() ?: "—")
             }
         }
 
         item {
             Text(
-                "Hoje",
-                style = MaterialTheme.typography.titleMedium,
+                "LINHA DO TEMPO",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
         }
 
         if (pontosHoje.isEmpty()) {
             item {
-                Text(
-                    "Nenhum ponto registrado hoje.",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Default.HourglassEmpty,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Nenhum ponto registrado hoje.",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
             }
         } else {
             item {
-                LinhaDoTempoDia(
-                    itens = montarLinhaDoTempo(pontosHoje),
-                    aoExcluir = aoExcluir
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Box(Modifier.padding(horizontal = 8.dp, vertical = 12.dp)) {
+                        LinhaDoTempoDia(
+                            itens = montarLinhaDoTempo(pontosHoje),
+                            aoExcluir = aoExcluir
+                        )
+                    }
+                }
             }
-            item {
-                Text(
-                    "Total trabalhado: ${totalTrabalhado(pontosHoje).formatar()}" +
-                        if (pontosHoje.size % 2 != 0) " (em andamento)" else "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
+        }
+    }
+}
+
+/** Situação atual do dia, com cor semântica: verde trabalhando, âmbar em intervalo. */
+@Composable
+private fun ChipEstado(pontosHoje: List<Ponto>, trabalhado: java.time.Duration) {
+    val ultimo = pontosHoje.lastOrNull()
+    val (texto, cor) = when {
+        ultimo == null ->
+            "Nenhum registro hoje" to MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+        pontosHoje.size % 2 == 1 ->
+            "Trabalhando desde ${ultimo.timestamp.paraHora()}" to MaterialTheme.colorScheme.tertiary
+        trabalhado.toMillis() >= JORNADA_MS ->
+            "Jornada concluída" to MaterialTheme.colorScheme.primary
+        else ->
+            "Em intervalo desde ${ultimo.timestamp.paraHora()}" to Color(0xFFE08700)
+    }
+    Surface(shape = RoundedCornerShape(50), color = cor.copy(alpha = 0.12f)) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(cor)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                texto,
+                style = MaterialTheme.typography.labelLarge,
+                color = cor,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.TileResumo(titulo: String, valor: String) {
+    Card(
+        modifier = Modifier.weight(1f),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                titulo,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                valor,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
