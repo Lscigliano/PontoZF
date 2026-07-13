@@ -1,8 +1,12 @@
 package com.pontozf
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -16,9 +20,19 @@ import com.pontozf.ui.theme.PontoZFTheme
 
 class MainActivity : FragmentActivity() {
 
+    private val pedirNotificacao =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Permissão para o lembrete de fim do intervalo (Android 13+).
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            pedirNotificacao.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
         setContent {
             val viewModel: PontoViewModel = viewModel()
             val tema by viewModel.tema.collectAsStateWithLifecycle()

@@ -10,13 +10,20 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pontozf.data.Ponto
 import com.pontozf.data.PontoDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private val Context.dataStore by preferencesDataStore(name = "config")
 private val CHAVE_TEMA = intPreferencesKey("tema")
@@ -30,6 +37,9 @@ const val BLOQUEIO_TOQUE_DUPLO_MS = 60 * 1000L
 
 enum class Tema { SISTEMA, CLARO, ESCURO }
 
+/** Nova versão do app disponível no GitHub. */
+data class Atualizacao(val versao: String, val url: String)
+
 sealed interface ResultadoRegistro {
     data object Sucesso : ResultadoRegistro
     data object ToqueDuplo : ResultadoRegistro
@@ -41,6 +51,57 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
 
     private val dao = PontoDatabase.get(app).pontoDao()
     private val dataStore = app.dataStore
+
+    private val _atualizacao = MutableStateFlow<Atualizacao?>(null)
+
+    /** Preenchido quando há uma release mais nova que a versão instalada. */
+    val atualizacao: StateFlow<Atualizacao?> = _atualizacao
+
+    init {
+        verificarAtualizacao()
+    }
+
+    private fun verificarAtualizacao() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val conexao = URL("https://api.github.com/repos/Lscigliano/PontoZF/releases/latest")
+                    .openConnection() as HttpURLConnection
+                conexao.connectTimeout = 10_000
+                conexao.readTimeout = 10_000
+                val corpo = conexao.inputStream.bufferedReader().use { it.readText() }
+                conexao.disconnect()
+
+                val json = JSONObject(corpo)
+                val versaoRemota = json.getString("tag_name").removePrefix("v")
+                val assets = json.optJSONArray("assets")
+                val url = if (assets != null && assets.length() > 0) {
+                    assets.getJSONObject(0).getString("browser_download_url")
+                } else {
+                    json.getString("html_url")
+                }
+                if (versaoMaisNova(versaoRemota, BuildConfig.VERSION_NAME)) {
+                    _atualizacao.value = Atualizacao(versaoRemota, url)
+                }
+            } catch (_: Exception) {
+                // Sem internet ou GitHub indisponível: segue sem aviso.
+            }
+        }
+    }
+
+    fun dispensarAtualizacao() {
+        _atualizacao.value = null
+    }
+
+    private fun versaoMaisNova(remota: String, local: String): Boolean {
+        val r = remota.split(".").map { it.toIntOrNull() ?: 0 }
+        val l = local.split(".").map { it.toIntOrNull() ?: 0 }
+        for (i in 0 until maxOf(r.size, l.size)) {
+            val a = r.getOrElse(i) { 0 }
+            val b = l.getOrElse(i) { 0 }
+            if (a != b) return a > b
+        }
+        return false
+    }
 
     val pontos: StateFlow<List<Ponto>> = dao.observarTodos()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -100,6 +161,21 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
             }
 
             dao.inserir(Ponto(timestamp = agora))
+
+            // Saída para o intervalo (2º ponto do dia): lembra de voltar em 1 hora.
+            if (pontosHoje.size + 1 == 2) {
+                val horaRetorno = Instant.ofEpochMilli(agora + INTERVALO_MINIMO_MS)
+                    .atZone(zona)
+                    .format(DateTimeFormatter.ofPattern("HH:mm"))
+                agendarLembreteIntervalo(
+                    getApplication(),
+                    quando = agora + 60 * 60 * 1000L,
+                    horaRetorno = horaRetorno
+                )
+            } else {
+                cancelarLembreteIntervalo(getApplication())
+            }
+
             aoResultado(ResultadoRegistro.Sucesso)
         }
     }

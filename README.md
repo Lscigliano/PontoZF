@@ -35,13 +35,16 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 - **Aparência**: tema claro, escuro ou seguir o sistema.
 
 ### Geral
-- **Dados 100% locais**: tudo fica salvo no aparelho (banco SQLite via Room), funciona offline e não depende de servidor.
+- **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para quando completar 1 hora — "Hora de voltar!", informando o horário liberado para o retorno.
+- **Aviso de atualização**: ao abrir, o app consulta as releases do GitHub; se houver versão mais nova, oferece o download na hora (botão "Baixar" abre o APK novo direto).
+- **Dados 100% locais**: os registros ficam salvos no aparelho (banco SQLite via Room) e funcionam offline — internet é usada só para checar atualização.
 - Preferências (tema, biometria) persistidas entre sessões.
 
 ## Histórico de versões
 
 | Versão | Novidades |
 |---|---|
+| **1.5** | Aviso de nova versão (checagem no GitHub ao abrir); notificação "Hora de voltar!" 1h após a saída para o almoço |
 | **1.4.1** | Jornada corrigida para 8h48 e intervalo mínimo para 1h01 |
 | **1.4** | Aba Ajustes com registro manual (data/hora); bloqueio rígido do retorno de intervalo; leitor de digital sempre visível ao registrar |
 | **1.3** | Confirmação por digital no registro; exportação do histórico por mês; build movido para fora do OneDrive |
@@ -105,7 +108,8 @@ volta para `.android\` no computador novo antes de compilar.
 ```
 app/src/main/java/com/pontozf/
 ├── MainActivity.kt          # Ponto de entrada, aplica o tema, autenticação por digital
-├── PontoViewModel.kt        # Regras de negócio (registro, validação de intervalo, tema, biometria)
+├── PontoViewModel.kt        # Regras de negócio (registro, bloqueios, checagem de atualização)
+├── LembreteReceiver.kt      # Alarme + notificação de fim do intervalo
 ├── data/
 │   ├── Ponto.kt             # Entidade (id + timestamp)
 │   ├── PontoDao.kt          # Consultas ao banco

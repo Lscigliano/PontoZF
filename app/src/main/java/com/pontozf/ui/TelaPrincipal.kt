@@ -1,5 +1,7 @@
 package com.pontozf.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -36,11 +39,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pontozf.BuildConfig
 import com.pontozf.PontoViewModel
 import com.pontozf.ResultadoRegistro
 import com.pontozf.data.Ponto
@@ -64,6 +69,8 @@ fun TelaPrincipal(
     val pontos by viewModel.pontos.collectAsStateWithLifecycle()
     val tema by viewModel.tema.collectAsStateWithLifecycle()
     val biometriaAtiva by viewModel.biometria.collectAsStateWithLifecycle()
+    val atualizacao by viewModel.atualizacao.collectAsStateWithLifecycle()
+    val contexto = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val escopo = rememberCoroutineScope()
 
@@ -163,6 +170,29 @@ fun TelaPrincipal(
                 modifier = Modifier.padding(padding)
             )
         }
+    }
+
+    atualizacao?.let { nova ->
+        AlertDialog(
+            onDismissRequest = viewModel::dispensarAtualizacao,
+            icon = { Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Nova versão disponível") },
+            text = {
+                Text(
+                    "A versão ${nova.versao} do PontoZF está disponível " +
+                        "(você usa a ${BuildConfig.VERSION_NAME}). Deseja baixar agora?"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    contexto.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(nova.url)))
+                    viewModel.dispensarAtualizacao()
+                }) { Text("Baixar") }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dispensarAtualizacao) { Text("Depois") }
+            }
+        )
     }
 
     bloqueio?.let { resultado ->
