@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(cp PontoZF.apk \"/c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/PontoZF.apk\")",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(./gradlew.bat -q :app:dependencies --configuration debugRuntimeClasspath)"
     ]
   }
 }
