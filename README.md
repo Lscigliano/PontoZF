@@ -45,6 +45,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.5.6** | Linha "Jornada configurada" na seção Sobre (atualização de teste do aviso de nova versão) |
 | **1.5.5** | Correção definitiva do travamento na abertura: fragment 1.8.4 forçado (o 1.2.5 da lib de biometria quebrava o pedido de permissão de notificações) |
 | **1.5.4** | Relatório de travamento: se o app fechar sozinho, a próxima abertura mostra o erro com botão de compartilhar |
 | **1.5.3** | Correção de fechamento na abertura (crash da 1.5.2 no Samsung); checagem de atualização movida para onResume |

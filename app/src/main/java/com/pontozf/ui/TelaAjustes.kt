@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MoreTime
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -191,6 +192,11 @@ fun ConteudoAjustes(
                     icone = Icons.Default.Person,
                     titulo = "Desenvolvedor",
                     detalhe = "Leonardo Scigliano"
+                )
+                LinhaSobre(
+                    icone = Icons.Default.Schedule,
+                    titulo = "Jornada configurada",
+                    detalhe = "8h48 por dia • intervalo mínimo de 1h01"
                 )
                 LinhaSobre(
                     icone = Icons.Default.Code,
