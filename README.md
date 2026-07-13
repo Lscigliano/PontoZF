@@ -45,6 +45,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.5.2** | Verificação de atualização a cada retorno ao app (não só na primeira abertura) |
 | **1.5.1** | Seção Sobre nos Ajustes: versão instalada, desenvolvedor e link do GitHub |
 | **1.5** | Aviso de nova versão (checagem no GitHub ao abrir); notificação "Hora de voltar!" 1h após a saída para o almoço |
 | **1.4.1** | Jornada corrigida para 8h48 e intervalo mínimo para 1h01 |

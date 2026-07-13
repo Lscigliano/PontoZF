@@ -57,11 +57,8 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
     /** Preenchido quando há uma release mais nova que a versão instalada. */
     val atualizacao: StateFlow<Atualizacao?> = _atualizacao
 
-    init {
-        verificarAtualizacao()
-    }
-
-    private fun verificarAtualizacao() {
+    /** Chamada sempre que o app volta ao primeiro plano (ver TelaPrincipal). */
+    fun verificarAtualizacao() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val conexao = URL("https://api.github.com/repos/Lscigliano/PontoZF/releases/latest")
