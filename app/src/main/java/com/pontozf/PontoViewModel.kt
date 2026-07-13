@@ -22,8 +22,8 @@ private val Context.dataStore by preferencesDataStore(name = "config")
 private val CHAVE_TEMA = intPreferencesKey("tema")
 private val CHAVE_BIOMETRIA = booleanPreferencesKey("biometria")
 
-/** Intervalo mínimo entre a saída para descanso e o retorno: 1 hora e 4 minutos. */
-const val INTERVALO_MINIMO_MS = 64 * 60 * 1000L
+/** Intervalo mínimo entre a saída para descanso e o retorno: 1 hora e 1 minuto. */
+const val INTERVALO_MINIMO_MS = 61 * 60 * 1000L
 
 /** Bloqueio de toque duplo acidental no botão. */
 const val BLOQUEIO_TOQUE_DUPLO_MS = 60 * 1000L
@@ -33,7 +33,7 @@ enum class Tema { SISTEMA, CLARO, ESCURO }
 sealed interface ResultadoRegistro {
     data object Sucesso : ResultadoRegistro
     data object ToqueDuplo : ResultadoRegistro
-    /** Retorno de intervalo com menos de 1h04 de descanso: bloqueado. */
+    /** Retorno de intervalo com menos de 1h01 de descanso: bloqueado. */
     data class IntervaloCurto(val liberadoEm: Long) : ResultadoRegistro
 }
 
@@ -71,7 +71,7 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
      *
      * Regras (bloqueios, sem exceção pelo botão):
      * - Menos de 1 minuto desde o último ponto: toque duplo acidental.
-     * - Retorno de intervalo com menos de 1h04 de descanso: bloqueado.
+     * - Retorno de intervalo com menos de 1h01 de descanso: bloqueado.
      *
      * Situações legítimas fora das regras (saída antecipada autorizada,
      * entrada esquecida etc.) são resolvidas pelo registro manual em Ajustes.

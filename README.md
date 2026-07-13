@@ -9,18 +9,18 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 ### Registro de ponto (aba Hoje)
 - **Registrar Ponto com um toque**: grava exatamente a hora atual do celular (ex.: `08:00`, `12:00`, `13:05`).
 - **Confirmação por digital (opcional)**: com a opção ativa (aba Ajustes), o leitor de digital aparece na tela e o ponto só é gravado após reconhecer a digital. Se o aparelho não tiver biometria disponível, o registro é liberado normalmente.
-- **Bloqueio de retorno de intervalo**: o retorno do almoço exige no mínimo **1 hora e 4 minutos** de descanso (saiu 11:51 → só volta a partir de 12:55). Antes disso o registro é bloqueado, sem exceção — o app informa o horário liberado.
+- **Bloqueio de retorno de intervalo**: o retorno do almoço exige no mínimo **1 hora e 1 minuto** de descanso (saiu 12:00 → só volta a partir de 13:01). Antes disso o registro é bloqueado, sem exceção — o app informa o horário liberado.
 - **Proteção contra toque duplo**: registros com menos de 1 minuto de diferença são bloqueados.
 - **Relógio ao vivo** com data por extenso em português.
 
 ### Linha do tempo do dia (aba Hoje)
 - Pontos do dia exibidos como **linha do tempo vertical**: entrada (seta verde) e saída (seta vermelha) como nós, com o último ponto batido destacado por um anel azul.
 - **Duração de cada trecho** entre os nós: "Turno de 04h 00m", "Intervalo de 01h 00m".
-- **Previsões em cinza** do restante da jornada (baseadas na jornada padrão CLT de 8h + 1h de intervalo):
+- **Previsões em cinza** do restante da jornada (baseadas na jornada de **8h48** — compensação do sábado — com intervalo de 1h01 após 4h de turno):
   - Bateu só a entrada → previsão de saída para o intervalo, de retorno e de fim da jornada;
   - No intervalo → previsão de retorno e de fim da jornada;
   - Voltou do intervalo → previsão de fim da jornada;
-  - Completou as 8h → sem previsões.
+  - Completou as 8h48 → sem previsões.
 - **Total trabalhado no dia** somado automaticamente (pares entrada/saída), com indicação de "(em andamento)" quando há turno aberto.
 - **Excluir registro**: lixeira em cada ponto, com confirmação.
 
@@ -42,7 +42,8 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
-| **1.4** | Aba Ajustes com registro manual (data/hora); bloqueio rígido do retorno de intervalo (mínimo 1h04); leitor de digital sempre visível ao registrar |
+| **1.4.1** | Jornada corrigida para 8h48 e intervalo mínimo para 1h01 |
+| **1.4** | Aba Ajustes com registro manual (data/hora); bloqueio rígido do retorno de intervalo; leitor de digital sempre visível ao registrar |
 | **1.3** | Confirmação por digital no registro; exportação do histórico por mês; build movido para fora do OneDrive |
 | **1.2** | Linha do tempo do dia na aba Hoje, com previsões de intervalo e fim de jornada |
 | **1.1** | Aba Histórico com pontos agrupados por mês e navegação inferior (Hoje / Histórico) |

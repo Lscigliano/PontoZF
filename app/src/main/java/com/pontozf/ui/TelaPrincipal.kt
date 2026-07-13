@@ -169,7 +169,7 @@ fun TelaPrincipal(
         val (titulo, texto) = when (resultado) {
             is ResultadoRegistro.IntervaloCurto ->
                 "Retorno bloqueado" to
-                    "O intervalo mínimo é de 1 hora e 4 minutos. " +
+                    "O intervalo mínimo é de 1 hora e 1 minuto. " +
                     "Você poderá registrar o retorno a partir das ${resultado.liberadoEm.paraHora()}."
             else -> return@let
         }
