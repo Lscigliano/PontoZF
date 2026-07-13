@@ -45,6 +45,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.5.4** | Relatório de travamento: se o app fechar sozinho, a próxima abertura mostra o erro com botão de compartilhar |
 | **1.5.3** | Correção de fechamento na abertura (crash da 1.5.2 no Samsung); checagem de atualização movida para onResume |
 | **1.5.2** | Verificação de atualização a cada retorno ao app (não só na primeira abertura) |
 | **1.5.1** | Seção Sobre nos Ajustes: versão instalada, desenvolvedor e link do GitHub |
