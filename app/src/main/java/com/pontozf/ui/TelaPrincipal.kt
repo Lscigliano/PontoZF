@@ -157,15 +157,10 @@ fun TelaPrincipal(
                 aoDefinirTema = viewModel::definirTema,
                 biometriaAtiva = biometriaAtiva,
                 aoDefinirBiometria = viewModel::definirBiometria,
-                aoAdicionarManual = { timestamp ->
-                    if (timestamp > System.currentTimeMillis()) {
-                        escopo.launch {
-                            snackbarHostState.showSnackbar("Não é possível adicionar um registro no futuro.")
-                        }
-                    } else {
-                        viewModel.inserirManual(timestamp)
-                        escopo.launch { snackbarHostState.showSnackbar("Registro adicionado.") }
-                    }
+                pontos = pontos,
+                aoAjustarDia = { data, horarios ->
+                    viewModel.ajustarDia(data, horarios)
+                    escopo.launch { snackbarHostState.showSnackbar("Pontos do dia ajustados.") }
                 },
                 modifier = Modifier.padding(padding)
             )
@@ -180,13 +175,17 @@ fun TelaPrincipal(
             text = {
                 Text(
                     "A versão ${nova.versao} do PontoZF está disponível " +
-                        "(você usa a ${BuildConfig.VERSION_NAME}). Deseja baixar agora?"
+                        "(você usa a ${BuildConfig.VERSION_NAME}). Deseja baixar agora?\n\n" +
+                        "O aplicativo será fechado para a instalação acontecer com segurança."
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     contexto.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(nova.url)))
                     viewModel.dispensarAtualizacao()
+                    // Fecha o app: instalar por cima de um app aberto derruba o
+                    // processo no meio e assusta o usuário com aviso de erro.
+                    (contexto as? android.app.Activity)?.finishAffinity()
                 }) { Text("Baixar") }
             },
             dismissButton = {

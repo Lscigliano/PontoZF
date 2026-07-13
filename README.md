@@ -30,14 +30,14 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 - **Exportar mês**: ícone de compartilhar ao lado de cada mês gera um texto com os registros dia a dia e os totais, enviável por WhatsApp, e-mail ou salvo em arquivo.
 
 ### Ajustes (aba Ajustes)
-- **Registro manual**: adiciona um ponto esquecido escolhendo data e hora (ex.: a entrada 08:01 que não foi batida) — é a válvula de escape para os bloqueios automáticos.
+- **Ajustar pontos do dia**: escolha o dia no calendário e corrija os **4 períodos fixos** — Entrada, Saída almoço, Retorno almoço e Saída trabalho — com horários digitados pelo teclado. Os campos vêm pré-preenchidos com o que já foi batido; a tela valida ordem crescente, preenchimento sem pular períodos e impede horários no futuro. É a válvula de escape para os bloqueios automáticos.
 - **Confirmação por digital**: liga/desliga a exigência de biometria no registro.
 - **Aparência**: tema claro, escuro ou seguir o sistema.
 - **Sobre**: versão/release instalada, desenvolvedor (Leonardo Scigliano) e atalho para o projeto no GitHub.
 
 ### Geral
 - **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para quando completar 1 hora — "Hora de voltar!", informando o horário liberado para o retorno.
-- **Aviso de atualização**: ao abrir, o app consulta as releases do GitHub; se houver versão mais nova, oferece o download na hora (botão "Baixar" abre o APK novo direto).
+- **Aviso de atualização**: ao voltar ao app, ele consulta as releases do GitHub; se houver versão mais nova, oferece o download na hora — e **fecha o app sozinho** ao baixar, para a instalação acontecer com segurança.
 - **Dados 100% locais**: os registros ficam salvos no aparelho (banco SQLite via Room) e funcionam offline — internet é usada só para checar atualização.
 - Preferências (tema, biometria) persistidas entre sessões.
 
@@ -45,6 +45,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.6** | Ajuste do dia pelos 4 períodos fixos (Entrada, Saída almoço, Retorno almoço, Saída trabalho) com validação; app fecha sozinho ao baixar atualização |
 | **1.5.6** | Horário do registro manual digitado pelo teclado (TimeInput); linha "Jornada configurada" na seção Sobre |
 | **1.5.5** | Correção definitiva do travamento na abertura: fragment 1.8.4 forçado (o 1.2.5 da lib de biometria quebrava o pedido de permissão de notificações) |
 | **1.5.4** | Relatório de travamento: se o app fechar sozinho, a próxima abertura mostra o erro com botão de compartilhar |

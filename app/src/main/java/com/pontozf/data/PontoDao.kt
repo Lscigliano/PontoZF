@@ -20,4 +20,7 @@ interface PontoDao {
 
     @Delete
     suspend fun excluir(ponto: Ponto)
+
+    @Query("DELETE FROM pontos WHERE timestamp BETWEEN :inicio AND :fim")
+    suspend fun excluirEntre(inicio: Long, fim: Long)
 }

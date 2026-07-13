@@ -177,9 +177,19 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** Registro manual (aba Ajustes): insere um ponto esquecido com data/hora escolhidas. */
-    fun inserirManual(timestamp: Long) {
-        viewModelScope.launch { dao.inserir(Ponto(timestamp = timestamp)) }
+    /**
+     * Ajuste dos 4 períodos de um dia (aba Ajustes): substitui todos os pontos
+     * do dia pelos horários informados (Entrada, Saída almoço, Retorno almoço,
+     * Saída trabalho — os preenchidos, em ordem).
+     */
+    fun ajustarDia(data: LocalDate, horarios: List<Long>) {
+        viewModelScope.launch {
+            val zona = ZoneId.systemDefault()
+            val inicio = data.atStartOfDay(zona).toInstant().toEpochMilli()
+            val fim = data.plusDays(1).atStartOfDay(zona).toInstant().toEpochMilli() - 1
+            dao.excluirEntre(inicio, fim)
+            horarios.sorted().forEach { dao.inserir(Ponto(timestamp = it)) }
+        }
     }
 
     fun excluir(ponto: Ponto) {

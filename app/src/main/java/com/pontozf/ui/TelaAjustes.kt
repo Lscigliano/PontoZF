@@ -15,12 +15,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.MoreTime
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
@@ -30,6 +31,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -40,6 +42,8 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,10 +55,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pontozf.BuildConfig
 import com.pontozf.Tema
+import com.pontozf.data.Ponto
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
+private val RotulosPeriodos =
+    listOf("Entrada", "Saída almoço", "Retorno almoço", "Saída trabalho")
+private val FormatoDataAjuste = DateTimeFormatter.ofPattern("dd/MM/yyyy", LocalePtBr)
+private val FormatoHoraAjuste = DateTimeFormatter.ofPattern("HH:mm", LocalePtBr)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,12 +75,15 @@ fun ConteudoAjustes(
     aoDefinirTema: (Tema) -> Unit,
     biometriaAtiva: Boolean,
     aoDefinirBiometria: (Boolean) -> Unit,
-    aoAdicionarManual: (Long) -> Unit,
+    pontos: List<Ponto>,
+    aoAjustarDia: (LocalDate, List<Long>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var mostrarData by remember { mutableStateOf(false) }
-    var mostrarHora by remember { mutableStateOf(false) }
-    var dataEscolhida by remember { mutableStateOf(LocalDate.now()) }
+    var dataEscolhida by remember { mutableStateOf<LocalDate?>(null) }
+    var indiceEditando by remember { mutableStateOf<Int?>(null) }
+    var erroAjuste by remember { mutableStateOf<String?>(null) }
+    val horarios = remember { mutableStateListOf<LocalTime?>(null, null, null, null) }
 
     Column(
         modifier = modifier
@@ -126,15 +141,15 @@ fun ConteudoAjustes(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.MoreTime,
+                    Icons.Default.EditCalendar,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Adicionar registro manual", fontWeight = FontWeight.SemiBold)
+                    Text("Ajustar pontos do dia", fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Para pontos esquecidos — ex.: a entrada que não foi batida",
+                        "Corrija os 4 períodos: entrada, saída e retorno do almoço, saída",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -225,11 +240,21 @@ fun ConteudoAjustes(
                 TextButton(onClick = {
                     val selecionado = estadoData.selectedDateMillis
                     if (selecionado != null) {
-                        dataEscolhida = Instant.ofEpochMilli(selecionado)
+                        val data = Instant.ofEpochMilli(selecionado)
                             .atZone(ZoneOffset.UTC)
                             .toLocalDate()
+                        val zona = ZoneId.systemDefault()
+                        val doDia = pontos
+                            .filter { it.timestamp.paraDataLocal() == data }
+                            .sortedBy { it.timestamp }
+                        for (i in 0..3) {
+                            horarios[i] = doDia.getOrNull(i)?.let {
+                                Instant.ofEpochMilli(it.timestamp).atZone(zona).toLocalTime()
+                            }
+                        }
+                        erroAjuste = null
                         mostrarData = false
-                        mostrarHora = true
+                        dataEscolhida = data
                     }
                 }) { Text("Avançar") }
             },
@@ -238,32 +263,110 @@ fun ConteudoAjustes(
             }
         ) {
             DatePicker(state = estadoData, title = {
-                Text("Dia do registro", modifier = Modifier.padding(start = 24.dp, top = 16.dp))
+                Text("Dia do ajuste", modifier = Modifier.padding(start = 24.dp, top = 16.dp))
             })
         }
     }
 
-    if (mostrarHora) {
-        val estadoHora = rememberTimePickerState(is24Hour = true)
+    dataEscolhida?.let { data ->
         AlertDialog(
-            onDismissRequest = { mostrarHora = false },
-            title = { Text("Horário do registro") },
-            text = { TimeInput(state = estadoHora) },
+            onDismissRequest = { dataEscolhida = null },
+            title = { Text("Pontos de ${data.format(FormatoDataAjuste)}") },
+            text = {
+                Column {
+                    RotulosPeriodos.forEachIndexed { i, rotulo ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { indiceEditando = i }
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(rotulo, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    horarios[i]?.format(FormatoHoraAjuste) ?: "Toque para definir",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (horarios[i] != null) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    }
+                                )
+                            }
+                            if (horarios[i] != null) {
+                                IconButton(onClick = { horarios[i] = null }) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Limpar $rotulo",
+                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    erroAjuste?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
-                    val timestamp = dataEscolhida
-                        .atTime(estadoHora.hour, estadoHora.minute)
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli()
-                    aoAdicionarManual(timestamp)
-                    mostrarHora = false
-                }) { Text("Adicionar") }
+                    val preenchidos = horarios.takeWhile { it != null }.filterNotNull()
+                    val zona = ZoneId.systemDefault()
+                    val timestamps = preenchidos.map {
+                        data.atTime(it).atZone(zona).toInstant().toEpochMilli()
+                    }
+                    when {
+                        preenchidos.isEmpty() ->
+                            erroAjuste = "Defina pelo menos a entrada."
+                        horarios.drop(preenchidos.size).any { it != null } ->
+                            erroAjuste = "Preencha os períodos em ordem, sem pular."
+                        preenchidos.zipWithNext().any { (a, b) -> !b.isAfter(a) } ->
+                            erroAjuste = "Os horários precisam estar em ordem crescente."
+                        timestamps.any { it > System.currentTimeMillis() } ->
+                            erroAjuste = "Não é possível definir horários no futuro."
+                        else -> {
+                            aoAjustarDia(data, timestamps)
+                            dataEscolhida = null
+                        }
+                    }
+                }) { Text("Salvar") }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarHora = false }) { Text("Cancelar") }
+                TextButton(onClick = { dataEscolhida = null }) { Text("Cancelar") }
             }
         )
+    }
+
+    indiceEditando?.let { i ->
+        key(i) {
+            val estadoHora = rememberTimePickerState(
+                initialHour = horarios[i]?.hour ?: 8,
+                initialMinute = horarios[i]?.minute ?: 0,
+                is24Hour = true
+            )
+            AlertDialog(
+                onDismissRequest = { indiceEditando = null },
+                title = { Text(RotulosPeriodos[i]) },
+                text = { TimeInput(state = estadoHora) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        horarios[i] = LocalTime.of(estadoHora.hour, estadoHora.minute)
+                        erroAjuste = null
+                        indiceEditando = null
+                    }) { Text("Definir") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { indiceEditando = null }) { Text("Cancelar") }
+                }
+            )
+        }
     }
 }
 
