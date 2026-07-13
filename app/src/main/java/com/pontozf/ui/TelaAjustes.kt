@@ -1,5 +1,7 @@
 package com.pontozf.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,10 +15,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MoreTime
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,8 +45,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pontozf.BuildConfig
 import com.pontozf.Tema
 import java.time.Instant
 import java.time.LocalDate
@@ -159,6 +166,47 @@ fun ConteudoAjustes(
                 }
             }
         }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            "Sobre",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        val contexto = LocalContext.current
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(Modifier.padding(vertical = 4.dp)) {
+                LinhaSobre(
+                    icone = Icons.Default.Info,
+                    titulo = "PontoZF",
+                    detalhe = "Versão ${BuildConfig.VERSION_NAME} (release v${BuildConfig.VERSION_NAME})"
+                )
+                LinhaSobre(
+                    icone = Icons.Default.Person,
+                    titulo = "Desenvolvedor",
+                    detalhe = "Leonardo Scigliano"
+                )
+                LinhaSobre(
+                    icone = Icons.Default.Code,
+                    titulo = "Projeto no GitHub",
+                    detalhe = "Código-fonte, versões e downloads",
+                    aoClicar = {
+                        contexto.startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/Lscigliano/PontoZF/releases")
+                            )
+                        )
+                    }
+                )
+            }
+        }
     }
 
     if (mostrarData) {
@@ -210,6 +258,37 @@ fun ConteudoAjustes(
                 TextButton(onClick = { mostrarHora = false }) { Text("Cancelar") }
             }
         )
+    }
+}
+
+@Composable
+private fun LinhaSobre(
+    icone: ImageVector,
+    titulo: String,
+    detalhe: String,
+    aoClicar: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (aoClicar != null) Modifier.clickable(onClick = aoClicar) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icone,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(titulo, fontWeight = FontWeight.SemiBold)
+            Text(
+                detalhe,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
     }
 }
 

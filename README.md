@@ -33,6 +33,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 - **Registro manual**: adiciona um ponto esquecido escolhendo data e hora (ex.: a entrada 08:01 que não foi batida) — é a válvula de escape para os bloqueios automáticos.
 - **Confirmação por digital**: liga/desliga a exigência de biometria no registro.
 - **Aparência**: tema claro, escuro ou seguir o sistema.
+- **Sobre**: versão/release instalada, desenvolvedor (Leonardo Scigliano) e atalho para o projeto no GitHub.
 
 ### Geral
 - **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para quando completar 1 hora — "Hora de voltar!", informando o horário liberado para o retorno.
@@ -44,6 +45,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.5.1** | Seção Sobre nos Ajustes: versão instalada, desenvolvedor e link do GitHub |
 | **1.5** | Aviso de nova versão (checagem no GitHub ao abrir); notificação "Hora de voltar!" 1h após a saída para o almoço |
 | **1.4.1** | Jornada corrigida para 8h48 e intervalo mínimo para 1h01 |
 | **1.4** | Aba Ajustes com registro manual (data/hora); bloqueio rígido do retorno de intervalo; leitor de digital sempre visível ao registrar |
