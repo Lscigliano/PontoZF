@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.WarningAmber
@@ -63,9 +64,13 @@ private enum class Aba { HOJE, HISTORICO }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaPrincipal(viewModel: PontoViewModel) {
+fun TelaPrincipal(
+    viewModel: PontoViewModel,
+    autenticarBiometria: (aoResultado: (Boolean) -> Unit) -> Unit
+) {
     val pontos by viewModel.pontos.collectAsStateWithLifecycle()
     val tema by viewModel.tema.collectAsStateWithLifecycle()
+    val biometriaAtiva by viewModel.biometria.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val escopo = rememberCoroutineScope()
 
@@ -88,6 +93,21 @@ fun TelaPrincipal(viewModel: PontoViewModel) {
         }
     }
 
+    /** Fluxo do botão: se a confirmação por digital estiver ativa, autentica antes. */
+    fun registrarComConfirmacao() {
+        if (biometriaAtiva) {
+            autenticarBiometria { autenticado ->
+                if (autenticado) {
+                    registrar()
+                } else {
+                    escopo.launch { snackbarHostState.showSnackbar("Registro cancelado.") }
+                }
+            }
+        } else {
+            registrar()
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -99,6 +119,26 @@ fun TelaPrincipal(viewModel: PontoViewModel) {
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 actions = {
+                    IconButton(onClick = {
+                        val novoEstado = !biometriaAtiva
+                        viewModel.definirBiometria(novoEstado)
+                        escopo.launch {
+                            snackbarHostState.showSnackbar(
+                                if (novoEstado) "Confirmação por digital ativada."
+                                else "Confirmação por digital desativada."
+                            )
+                        }
+                    }) {
+                        Icon(
+                            Icons.Default.Fingerprint,
+                            contentDescription = "Confirmação por digital",
+                            tint = if (biometriaAtiva) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.4f)
+                            }
+                        )
+                    }
                     IconButton(onClick = { menuTemaAberto = true }) {
                         Icon(
                             imageVector = when (tema) {
@@ -152,7 +192,7 @@ fun TelaPrincipal(viewModel: PontoViewModel) {
         when (abaAtual) {
             Aba.HOJE -> ConteudoHoje(
                 pontos = pontos,
-                aoRegistrar = { registrar() },
+                aoRegistrar = { registrarComConfirmacao() },
                 aoExcluir = { pontoParaExcluir = it },
                 modifier = Modifier.padding(padding)
             )

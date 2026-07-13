@@ -2,6 +2,7 @@ package com.pontozf
 
 import android.app.Application
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -19,6 +20,7 @@ import java.time.ZoneId
 
 private val Context.dataStore by preferencesDataStore(name = "config")
 private val CHAVE_TEMA = intPreferencesKey("tema")
+private val CHAVE_BIOMETRIA = booleanPreferencesKey("biometria")
 
 /** Intervalo mínimo entre a saída para descanso e o retorno (CLT: 1 hora de almoço). */
 const val INTERVALO_MINIMO_MS = 60 * 60 * 1000L
@@ -50,6 +52,17 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
     fun definirTema(tema: Tema) {
         viewModelScope.launch {
             dataStore.edit { it[CHAVE_TEMA] = tema.ordinal }
+        }
+    }
+
+    /** Exigir confirmação por digital antes de registrar o ponto. */
+    val biometria: StateFlow<Boolean> = dataStore.data
+        .map { prefs -> prefs[CHAVE_BIOMETRIA] ?: false }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun definirBiometria(ativa: Boolean) {
+        viewModelScope.launch {
+            dataStore.edit { it[CHAVE_BIOMETRIA] = ativa }
         }
     }
 

@@ -1,5 +1,7 @@
 package com.pontozf.ui
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,14 +14,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pontozf.data.Ponto
@@ -29,6 +34,34 @@ import java.time.format.DateTimeFormatter
 
 private val FormatoDataCurta = DateTimeFormatter.ofPattern("dd/MM/yyyy (EEE)", LocalePtBr)
 private val FormatoMes = DateTimeFormatter.ofPattern("MMMM 'de' yyyy", LocalePtBr)
+private val FormatoDiaMes = DateTimeFormatter.ofPattern("dd/MM", LocalePtBr)
+
+/**
+ * Monta o texto do mês e abre o menu de compartilhar do Android
+ * (WhatsApp, e-mail, salvar em arquivo etc.).
+ */
+private fun exportarMes(contexto: Context, mes: YearMonth, porDia: Map<LocalDate, List<Ponto>>) {
+    val nomeMes = mes.format(FormatoMes).replaceFirstChar { it.uppercase(LocalePtBr) }
+    val texto = buildString {
+        appendLine("PontoZF — $nomeMes")
+        appendLine()
+        porDia.toSortedMap(compareBy { it }).forEach { (data, pontosDoDia) ->
+            val horarios = pontosDoDia.sortedBy { it.timestamp }
+                .joinToString(" | ") { it.timestamp.paraHora() }
+            appendLine("${data.format(FormatoDiaMes)}: $horarios (${totalTrabalhado(pontosDoDia).formatar()})")
+        }
+        val totalDoMes = porDia.values
+            .fold(java.time.Duration.ZERO) { acc, dia -> acc + totalTrabalhado(dia) }
+        appendLine()
+        appendLine("Total do mês: ${totalDoMes.formatar()}")
+    }
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, "PontoZF — $nomeMes")
+        putExtra(Intent.EXTRA_TEXT, texto)
+    }
+    contexto.startActivity(Intent.createChooser(intent, "Exportar $nomeMes"))
+}
 
 /**
  * Lista de todos os pontos agrupados por mês, do mais recente ao mais antigo.
@@ -36,6 +69,7 @@ private val FormatoMes = DateTimeFormatter.ofPattern("MMMM 'de' yyyy", LocalePtB
  */
 @Composable
 fun ConteudoHistorico(pontos: List<Ponto>, modifier: Modifier = Modifier) {
+    val contexto = LocalContext.current
     val porMes = pontos
         .groupBy { YearMonth.from(it.timestamp.paraDataLocal()) }
         .toSortedMap(compareByDescending { it })
@@ -75,15 +109,15 @@ fun ConteudoHistorico(pontos: List<Ponto>, modifier: Modifier = Modifier) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                        .padding(top = 12.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         mes.format(FormatoMes).replaceFirstChar { it.uppercase(LocalePtBr) },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
                     )
                     Text(
                         totalDoMes.formatar(),
@@ -91,6 +125,13 @@ fun ConteudoHistorico(pontos: List<Ponto>, modifier: Modifier = Modifier) {
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    IconButton(onClick = { exportarMes(contexto, mes, porDia) }) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = "Exportar mês",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
