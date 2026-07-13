@@ -18,7 +18,12 @@
       "Bash(mkdir teste-mv-a *)",
       "Bash(echo oi *)",
       "Bash(mv teste-mv-a *)",
-      "Bash(rm -rf teste-mv-b)"
+      "Bash(rm -rf teste-mv-b)",
+      "Bash(cp /c/Users/leonardo.scigliano/PontoZF/app/build/outputs/apk/debug/app-debug.apk \"/c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/PontoZF.apk\")",
+      "Read(//c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/**)",
+      "Bash(cp \"app/build/outputs/apk/debug/app-debug.apk\" \"/c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/PontoZF.apk\")",
+      "Bash(./gradlew assembleDebug --console=plain)",
+      "Bash(./compilar-apk.sh)"
     ]
   }
 }
