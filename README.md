@@ -22,8 +22,8 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
   - No intervalo → previsão de retorno e de fim da jornada;
   - Voltou do intervalo → previsão de fim da jornada;
   - Completou as 8h48 → sem previsões.
-- **Total trabalhado no dia** somado automaticamente (pares entrada/saída), com indicação de "(em andamento)" quando há turno aberto.
-- **Excluir registro**: lixeira em cada ponto, com confirmação.
+- **Total trabalhado no dia** somado automaticamente (pares entrada/saída), atualizado ao vivo nos cartões de resumo.
+- A linha do tempo é **somente leitura** — correções de horário são feitas exclusivamente em Ajustes → Ajustar pontos do dia.
 
 ### Histórico (aba Histórico)
 - Todos os registros **agrupados por mês**, do mais recente ao mais antigo — meses sem nenhum ponto não aparecem (ex.: férias).
@@ -38,6 +38,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 ### Geral
 - **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para quando completar 1 hora — "Hora de voltar!", informando o horário liberado para o retorno.
+- **Aviso de fim da jornada**: quando chega a previsão de fim (8h48 completas), o celular vibra e notifica — "Hora de ir embora! 🏠". O aviso se realinha a cada ponto batido e a ajustes manuais do dia.
 - **Aviso de atualização**: ao voltar ao app, ele consulta as releases do GitHub; se houver versão mais nova, oferece o download na hora — e **fecha o app sozinho** ao baixar, para a instalação acontecer com segurança.
 - **Dados 100% locais**: os registros ficam salvos no aparelho (banco SQLite via Room) e funcionam offline — internet é usada só para checar atualização.
 - Preferências (tema, biometria) persistidas entre sessões.
@@ -46,6 +47,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.8** | Aviso "Hora de ir embora!" com vibração na previsão de fim da jornada; linha do tempo somente leitura (correções só em Ajustes); paleta de cores refinada |
 | **1.7** | Visual profissional: painel do dia (chip de status + cartões Trabalhado/Restante/Fim previsto), botão de registro redesenhado, verde/âmbar semânticos, contagem de dias no Histórico e ícones tonais nos Ajustes |
 | **1.6** | Ajuste do dia pelos 4 períodos fixos (Entrada, Saída almoço, Retorno almoço, Saída trabalho) com validação; app fecha sozinho ao baixar atualização |
 | **1.5.6** | Horário do registro manual digitado pelo teclado (TimeInput); linha "Jornada configurada" na seção Sobre |

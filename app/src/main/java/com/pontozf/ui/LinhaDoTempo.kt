@@ -18,9 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -125,13 +123,13 @@ internal fun montarLinhaDoTempo(pontosHoje: List<Ponto>): List<ItemLinha> {
 }
 
 @Composable
-internal fun LinhaDoTempoDia(itens: List<ItemLinha>, aoExcluir: (Ponto) -> Unit) {
+internal fun LinhaDoTempoDia(itens: List<ItemLinha>) {
     Column(Modifier.fillMaxWidth()) {
         itens.forEachIndexed { i, item ->
             val primeiro = i == 0
             val ultimo = i == itens.lastIndex
             when (item) {
-                is ItemLinha.Registro -> NoRegistro(item, primeiro, ultimo, aoExcluir)
+                is ItemLinha.Registro -> NoRegistro(item, primeiro, ultimo)
                 is ItemLinha.Trecho -> TrechoDuracao(item.texto)
                 is ItemLinha.Previsao -> NoPrevisao(item, ultimo)
             }
@@ -182,8 +180,7 @@ private fun LinhaComTrilha(
 private fun NoRegistro(
     item: ItemLinha.Registro,
     primeiro: Boolean,
-    ultimo: Boolean,
-    aoExcluir: (Ponto) -> Unit
+    ultimo: Boolean
 ) {
     val cor = if (item.entrada) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
     LinhaComTrilha(
@@ -221,7 +218,7 @@ private fun NoRegistro(
         Row(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 12.dp, top = 6.dp, bottom = 6.dp),
+                .padding(start = 12.dp, top = 14.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -229,14 +226,6 @@ private fun NoRegistro(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = { aoExcluir(item.ponto) }) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Excluir",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
-                )
-            }
         }
     }
 }

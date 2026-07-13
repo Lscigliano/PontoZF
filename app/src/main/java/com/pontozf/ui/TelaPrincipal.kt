@@ -94,7 +94,6 @@ fun TelaPrincipal(
 
     var abaAtual by remember { mutableStateOf(Aba.HOJE) }
     var bloqueio by remember { mutableStateOf<ResultadoRegistro?>(null) }
-    var pontoParaExcluir by remember { mutableStateOf<Ponto?>(null) }
 
     fun registrar() {
         viewModel.registrar { resultado ->
@@ -164,7 +163,6 @@ fun TelaPrincipal(
                 pontos = pontos,
                 biometriaAtiva = biometriaAtiva,
                 aoRegistrar = { registrarComConfirmacao() },
-                aoExcluir = { pontoParaExcluir = it },
                 modifier = Modifier.padding(padding)
             )
             Aba.HISTORICO -> ConteudoHistorico(
@@ -232,21 +230,6 @@ fun TelaPrincipal(
         )
     }
 
-    pontoParaExcluir?.let { ponto ->
-        AlertDialog(
-            onDismissRequest = { pontoParaExcluir = null },
-            title = { Text("Excluir ponto") },
-            text = { Text("Excluir o registro das ${ponto.timestamp.paraHora()}?") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.excluir(ponto); pontoParaExcluir = null }) {
-                    Text("Excluir", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pontoParaExcluir = null }) { Text("Cancelar") }
-            }
-        )
-    }
 }
 
 @Composable
@@ -254,7 +237,6 @@ private fun ConteudoHoje(
     pontos: List<Ponto>,
     biometriaAtiva: Boolean,
     aoRegistrar: () -> Unit,
-    aoExcluir: (Ponto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hoje = LocalDate.now()
@@ -368,10 +350,7 @@ private fun ConteudoHoje(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Box(Modifier.padding(horizontal = 8.dp, vertical = 12.dp)) {
-                        LinhaDoTempoDia(
-                            itens = montarLinhaDoTempo(pontosHoje),
-                            aoExcluir = aoExcluir
-                        )
+                        LinhaDoTempoDia(itens = montarLinhaDoTempo(pontosHoje))
                     }
                 }
             }

@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pontozf.data.Ponto
 import com.pontozf.data.PontoDatabase
+import com.pontozf.ui.previsaoFimDaJornada
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -173,6 +174,8 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
                 cancelarLembreteIntervalo(getApplication())
             }
 
+            reagendarLembreteFim(pontosHoje + Ponto(timestamp = agora), agora)
+
             aoResultado(ResultadoRegistro.Sucesso)
         }
     }
@@ -189,10 +192,27 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
             val fim = data.plusDays(1).atStartOfDay(zona).toInstant().toEpochMilli() - 1
             dao.excluirEntre(inicio, fim)
             horarios.sorted().forEach { dao.inserir(Ponto(timestamp = it)) }
+
+            // Ajustou o dia de hoje: realinha o aviso de fim da jornada.
+            if (data == LocalDate.now(zona)) {
+                reagendarLembreteFim(
+                    horarios.sorted().map { Ponto(timestamp = it) },
+                    System.currentTimeMillis()
+                )
+            }
         }
     }
 
-    fun excluir(ponto: Ponto) {
-        viewModelScope.launch { dao.excluir(ponto) }
+    /**
+     * Mantém o aviso "hora de ir embora" alinhado à previsão de fim da jornada:
+     * agenda quando há previsão futura, cancela quando a jornada foi concluída.
+     */
+    private fun reagendarLembreteFim(pontosDoDia: List<Ponto>, agora: Long) {
+        val fimPrevisto = previsaoFimDaJornada(pontosDoDia)
+        if (fimPrevisto != null && fimPrevisto > agora) {
+            agendarLembreteFim(getApplication(), fimPrevisto)
+        } else {
+            cancelarLembreteFim(getApplication())
+        }
     }
 }

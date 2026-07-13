@@ -9,11 +9,13 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 
-private const val CANAL_LEMBRETES = "lembretes"
-private const val ID_NOTIFICACAO_INTERVALO = 1
+private const val CANAL_AVISOS = "avisos"
+private const val TIPO_INTERVALO = "intervalo"
+private const val TIPO_FIM = "fim"
 private const val ID_ALARME_INTERVALO = 1
+private const val ID_ALARME_FIM = 2
 
-/** Dispara a notificação de fim do intervalo agendada por [agendarLembreteIntervalo]. */
+/** Dispara as notificações agendadas: fim do intervalo e fim da jornada. */
 class LembreteReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -21,13 +23,26 @@ class LembreteReceiver : BroadcastReceiver() {
 
         gerente.createNotificationChannel(
             NotificationChannel(
-                CANAL_LEMBRETES,
-                "Lembretes de intervalo",
+                CANAL_AVISOS,
+                "Avisos de jornada",
                 NotificationManager.IMPORTANCE_HIGH
-            )
+            ).apply {
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 400, 200, 400)
+            }
         )
 
+        val tipo = intent.getStringExtra("tipo") ?: TIPO_INTERVALO
         val horaRetorno = intent.getStringExtra("horaRetorno") ?: ""
+        val (titulo, texto) = when (tipo) {
+            TIPO_FIM ->
+                "Hora de ir embora! 🏠" to
+                    "Sua jornada de 8h48 está completa. Registre a saída e bom descanso!"
+            else ->
+                "Hora de voltar!" to
+                    "Seu intervalo completou 1 hora. Retorno liberado a partir das $horaRetorno."
+        }
+
         val abrirApp = PendingIntent.getActivity(
             context,
             0,
@@ -35,36 +50,39 @@ class LembreteReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val notificacao = NotificationCompat.Builder(context, CANAL_LEMBRETES)
+        val notificacao = NotificationCompat.Builder(context, CANAL_AVISOS)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("Hora de voltar!")
-            .setContentText("Seu intervalo completou 1 hora. Retorno liberado a partir das $horaRetorno.")
+            .setContentTitle(titulo)
+            .setContentText(texto)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(abrirApp)
             .setAutoCancel(true)
             .build()
 
         try {
-            gerente.notify(ID_NOTIFICACAO_INTERVALO, notificacao)
+            gerente.notify(if (tipo == TIPO_FIM) ID_ALARME_FIM else ID_ALARME_INTERVALO, notificacao)
         } catch (_: SecurityException) {
             // Permissão de notificação negada: nada a fazer.
         }
     }
 }
 
-/**
- * Agenda a notificação de fim do intervalo para [quando] (1 hora após a saída).
- * Usa setAlarmClock, que é exato e não exige permissão especial.
- */
-fun agendarLembreteIntervalo(context: Context, quando: Long, horaRetorno: String) {
-    val alarmes = context.getSystemService(AlarmManager::class.java)
+private fun pendenteDoLembrete(context: Context, tipo: String, id: Int, horaRetorno: String = ""): PendingIntent {
     val intent = Intent(context, LembreteReceiver::class.java)
+        .putExtra("tipo", tipo)
         .putExtra("horaRetorno", horaRetorno)
-    val pendente = PendingIntent.getBroadcast(
+    return PendingIntent.getBroadcast(
         context,
-        ID_ALARME_INTERVALO,
+        id,
         intent,
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
+}
+
+private fun agendar(context: Context, quando: Long, pendente: PendingIntent) {
+    val alarmes = context.getSystemService(AlarmManager::class.java)
     val aoTocar = PendingIntent.getActivity(
         context,
         0,
@@ -74,14 +92,22 @@ fun agendarLembreteIntervalo(context: Context, quando: Long, horaRetorno: String
     alarmes.setAlarmClock(AlarmManager.AlarmClockInfo(quando, aoTocar), pendente)
 }
 
-/** Cancela o lembrete pendente (ex.: retorno registrado ou saída excluída). */
+/** Agenda o aviso de fim do intervalo (1 hora após a saída para o almoço). */
+fun agendarLembreteIntervalo(context: Context, quando: Long, horaRetorno: String) {
+    agendar(context, quando, pendenteDoLembrete(context, TIPO_INTERVALO, ID_ALARME_INTERVALO, horaRetorno))
+}
+
 fun cancelarLembreteIntervalo(context: Context) {
-    val alarmes = context.getSystemService(AlarmManager::class.java)
-    val pendente = PendingIntent.getBroadcast(
-        context,
-        ID_ALARME_INTERVALO,
-        Intent(context, LembreteReceiver::class.java),
-        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-    )
-    alarmes.cancel(pendente)
+    context.getSystemService(AlarmManager::class.java)
+        .cancel(pendenteDoLembrete(context, TIPO_INTERVALO, ID_ALARME_INTERVALO))
+}
+
+/** Agenda o aviso de fim da jornada ("hora de ir embora") para a previsão calculada. */
+fun agendarLembreteFim(context: Context, quando: Long) {
+    agendar(context, quando, pendenteDoLembrete(context, TIPO_FIM, ID_ALARME_FIM))
+}
+
+fun cancelarLembreteFim(context: Context) {
+    context.getSystemService(AlarmManager::class.java)
+        .cancel(pendenteDoLembrete(context, TIPO_FIM, ID_ALARME_FIM))
 }
