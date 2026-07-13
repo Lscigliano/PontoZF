@@ -1,7 +1,7 @@
 package com.pontozf.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,14 +12,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -28,6 +32,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -35,8 +41,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,39 +61,14 @@ import com.pontozf.Tema
 import com.pontozf.data.Ponto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val LocalePtBr = Locale("pt", "BR")
-private val FormatoHora = DateTimeFormatter.ofPattern("HH:mm", LocalePtBr)
 private val FormatoRelogio = DateTimeFormatter.ofPattern("HH:mm:ss", LocalePtBr)
 private val FormatoData = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM 'de' yyyy", LocalePtBr)
-private val FormatoDataCurta = DateTimeFormatter.ofPattern("dd/MM/yyyy (EEE)", LocalePtBr)
 
-private fun Long.paraDataLocal(): LocalDate =
-    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
-
-private fun Long.paraHora(): String =
-    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(FormatoHora)
-
-/** Soma os períodos trabalhados (pares entrada/saída) de um dia. */
-private fun totalTrabalhado(pontosDoDia: List<Ponto>): Duration {
-    val ordenados = pontosDoDia.sortedBy { it.timestamp }
-    var totalMs = 0L
-    for (i in ordenados.indices step 2) {
-        if (i + 1 < ordenados.size) {
-            totalMs += ordenados[i + 1].timestamp - ordenados[i].timestamp
-        }
-    }
-    return Duration.ofMillis(totalMs)
-}
-
-private fun Duration.formatar(): String = "%dh %02dmin".format(toMinutes() / 60, toMinutes() % 60)
+private enum class Aba { HOJE, HISTORICO }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,16 +78,10 @@ fun TelaPrincipal(viewModel: PontoViewModel) {
     val snackbarHostState = remember { SnackbarHostState() }
     val escopo = rememberCoroutineScope()
 
+    var abaAtual by remember { mutableStateOf(Aba.HOJE) }
     var avisoIntervalo by remember { mutableStateOf<Long?>(null) }
     var pontoParaExcluir by remember { mutableStateOf<Ponto?>(null) }
     var menuTemaAberto by remember { mutableStateOf(false) }
-
-    val hoje = LocalDate.now()
-    val pontosHoje = pontos.filter { it.timestamp.paraDataLocal() == hoje }.sortedBy { it.timestamp }
-    val diasAnteriores = pontos
-        .filter { it.timestamp.paraDataLocal() != hoje }
-        .groupBy { it.timestamp.paraDataLocal() }
-        .toSortedMap(compareByDescending { it })
 
     fun registrar(forcar: Boolean = false) {
         viewModel.registrar(forcar) { resultado ->
@@ -167,90 +140,35 @@ fun TelaPrincipal(viewModel: PontoViewModel) {
                     }
                 }
             )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
-        ) {
-            item { Relogio() }
-
-            item {
-                Button(
-                    onClick = { registrar() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp)
-                        .height(72.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("REGISTRAR PONTO", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            item {
-                Text(
-                    "Hoje",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    fontWeight = FontWeight.Bold
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = abaAtual == Aba.HOJE,
+                    onClick = { abaAtual = Aba.HOJE },
+                    icon = { Icon(Icons.Default.AccessTime, contentDescription = null) },
+                    label = { Text("Hoje") }
+                )
+                NavigationBarItem(
+                    selected = abaAtual == Aba.HISTORICO,
+                    onClick = { abaAtual = Aba.HISTORICO },
+                    icon = { Icon(Icons.Default.History, contentDescription = null) },
+                    label = { Text("Histórico") }
                 )
             }
-
-            if (pontosHoje.isEmpty()) {
-                item {
-                    Text(
-                        "Nenhum ponto registrado hoje.",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-            } else {
-                items(pontosHoje, key = { it.id }) { ponto ->
-                    val indice = pontosHoje.indexOf(ponto)
-                    CartaoPonto(
-                        ponto = ponto,
-                        entrada = indice % 2 == 0,
-                        aoExcluir = { pontoParaExcluir = ponto }
-                    )
-                }
-                item {
-                    Text(
-                        "Total trabalhado: ${totalTrabalhado(pontosHoje).formatar()}" +
-                            if (pontosHoje.size % 2 != 0) " (em andamento)" else "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-
-            if (diasAnteriores.isNotEmpty()) {
-                item {
-                    Text(
-                        "Dias anteriores",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 24.dp, bottom = 8.dp),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                diasAnteriores.forEach { (data, pontosDoDia) ->
-                    item(key = "dia-$data") {
-                        CartaoDia(data = data, pontosDoDia = pontosDoDia.sortedBy { it.timestamp })
-                    }
-                }
-            }
+        }
+    ) { padding ->
+        when (abaAtual) {
+            Aba.HOJE -> ConteudoHoje(
+                pontos = pontos,
+                aoRegistrar = { registrar() },
+                aoExcluir = { pontoParaExcluir = it },
+                modifier = Modifier.padding(padding)
+            )
+            Aba.HISTORICO -> ConteudoHistorico(
+                pontos = pontos,
+                modifier = Modifier.padding(padding)
+            )
         }
     }
 
@@ -292,6 +210,81 @@ fun TelaPrincipal(viewModel: PontoViewModel) {
                 TextButton(onClick = { pontoParaExcluir = null }) { Text("Cancelar") }
             }
         )
+    }
+}
+
+@Composable
+private fun ConteudoHoje(
+    pontos: List<Ponto>,
+    aoRegistrar: () -> Unit,
+    aoExcluir: (Ponto) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val hoje = LocalDate.now()
+    val pontosHoje = pontos.filter { it.timestamp.paraDataLocal() == hoje }.sortedBy { it.timestamp }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item { Relogio() }
+
+        item {
+            Button(
+                onClick = aoRegistrar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+                    .height(72.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("REGISTRAR PONTO", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        item {
+            Text(
+                "Hoje",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (pontosHoje.isEmpty()) {
+            item {
+                Text(
+                    "Nenhum ponto registrado hoje.",
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+        } else {
+            items(pontosHoje, key = { it.id }) { ponto ->
+                val indice = pontosHoje.indexOf(ponto)
+                CartaoPonto(
+                    ponto = ponto,
+                    entrada = indice % 2 == 0,
+                    aoExcluir = { aoExcluir(ponto) }
+                )
+            }
+            item {
+                Text(
+                    "Total trabalhado: ${totalTrabalhado(pontosHoje).formatar()}" +
+                        if (pontosHoje.size % 2 != 0) " (em andamento)" else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
     }
 }
 
@@ -359,39 +352,6 @@ private fun CartaoPonto(ponto: Ponto, entrada: Boolean, aoExcluir: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun CartaoDia(data: LocalDate, pontosDoDia: List<Ponto>) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    data.format(FormatoDataCurta).replaceFirstChar { it.uppercase(LocalePtBr) },
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    totalTrabalhado(pontosDoDia).formatar(),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                pontosDoDia.joinToString("  •  ") { it.timestamp.paraHora() },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
         }
     }
 }
