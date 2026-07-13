@@ -35,7 +35,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -248,7 +248,7 @@ fun ConteudoAjustes(
         AlertDialog(
             onDismissRequest = { mostrarHora = false },
             title = { Text("Horário do registro") },
-            text = { TimePicker(state = estadoHora) },
+            text = { TimeInput(state = estadoHora) },
             confirmButton = {
                 TextButton(onClick = {
                     val timestamp = dataEscolhida
