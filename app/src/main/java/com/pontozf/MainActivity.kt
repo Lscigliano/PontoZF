@@ -13,12 +13,14 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pontozf.ui.TelaPrincipal
 import com.pontozf.ui.theme.PontoZFTheme
 
 class MainActivity : FragmentActivity() {
+
+    private lateinit var viewModel: PontoViewModel
 
     private val pedirNotificacao =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -26,6 +28,7 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        viewModel = ViewModelProvider(this)[PontoViewModel::class.java]
 
         // Permissão para o lembrete de fim do intervalo (Android 13+).
         if (Build.VERSION.SDK_INT >= 33 &&
@@ -34,7 +37,6 @@ class MainActivity : FragmentActivity() {
             pedirNotificacao.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         setContent {
-            val viewModel: PontoViewModel = viewModel()
             val tema by viewModel.tema.collectAsStateWithLifecycle()
             val temaEscuro = when (tema) {
                 Tema.SISTEMA -> isSystemInDarkTheme()
@@ -45,6 +47,12 @@ class MainActivity : FragmentActivity() {
                 TelaPrincipal(viewModel, autenticarBiometria = ::autenticar)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Verifica nova versão sempre que o app volta ao primeiro plano.
+        viewModel.verificarAtualizacao()
     }
 
     /**
