@@ -32,10 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pontozf.data.Ponto
 
-/** Jornada padrão de 8 horas (CLT), com 1h de intervalo após 4h de turno. */
+/** Jornada padrão de 8 horas, com intervalo mínimo de 1h04 após 4h de turno. */
 private const val JORNADA_MS = 8 * 60 * 60 * 1000L
 private const val TURNO_ATE_INTERVALO_MS = 4 * 60 * 60 * 1000L
-private const val INTERVALO_PADRAO_MS = 60 * 60 * 1000L
+private const val INTERVALO_PADRAO_MS = 64 * 60 * 1000L
 
 private val VerdeEntrada = Color(0xFF43A047)
 

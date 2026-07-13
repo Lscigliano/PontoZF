@@ -3,7 +3,6 @@ package com.pontozf
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -35,17 +34,11 @@ class MainActivity : FragmentActivity() {
     }
 
     /**
-     * Pede a digital do usuário. Se o aparelho não tiver biometria cadastrada,
-     * libera direto (o registro não pode ficar impossível).
+     * Pede a digital do usuário, sempre mostrando o leitor na tela.
+     * Só libera sem digital se o aparelho não tiver biometria disponível
+     * (o registro não pode ficar impossível).
      */
     private fun autenticar(aoResultado: (Boolean) -> Unit) {
-        val disponivel = BiometricManager.from(this)
-            .canAuthenticate(BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
-        if (!disponivel) {
-            aoResultado(true)
-            return
-        }
-
         val prompt = BiometricPrompt(
             this,
             ContextCompat.getMainExecutor(this),
@@ -55,7 +48,12 @@ class MainActivity : FragmentActivity() {
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    aoResultado(false)
+                    when (errorCode) {
+                        BiometricPrompt.ERROR_NO_BIOMETRICS,
+                        BiometricPrompt.ERROR_HW_NOT_PRESENT,
+                        BiometricPrompt.ERROR_HW_UNAVAILABLE -> aoResultado(true)
+                        else -> aoResultado(false)
+                    }
                 }
             }
         )

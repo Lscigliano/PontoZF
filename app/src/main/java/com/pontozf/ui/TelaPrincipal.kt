@@ -9,20 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.BrightnessAuto
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -49,7 +43,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pontozf.PontoViewModel
 import com.pontozf.ResultadoRegistro
-import com.pontozf.Tema
 import com.pontozf.data.Ponto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -60,7 +53,7 @@ import java.time.format.DateTimeFormatter
 private val FormatoRelogio = DateTimeFormatter.ofPattern("HH:mm:ss", LocalePtBr)
 private val FormatoData = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM 'de' yyyy", LocalePtBr)
 
-private enum class Aba { HOJE, HISTORICO }
+private enum class Aba { HOJE, HISTORICO, AJUSTES }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,12 +68,11 @@ fun TelaPrincipal(
     val escopo = rememberCoroutineScope()
 
     var abaAtual by remember { mutableStateOf(Aba.HOJE) }
-    var avisoIntervalo by remember { mutableStateOf<Long?>(null) }
+    var bloqueio by remember { mutableStateOf<ResultadoRegistro?>(null) }
     var pontoParaExcluir by remember { mutableStateOf<Ponto?>(null) }
-    var menuTemaAberto by remember { mutableStateOf(false) }
 
-    fun registrar(forcar: Boolean = false) {
-        viewModel.registrar(forcar) { resultado ->
+    fun registrar() {
+        viewModel.registrar { resultado ->
             when (resultado) {
                 is ResultadoRegistro.Sucesso -> escopo.launch {
                     snackbarHostState.showSnackbar("Ponto registrado!")
@@ -88,7 +80,7 @@ fun TelaPrincipal(
                 is ResultadoRegistro.ToqueDuplo -> escopo.launch {
                     snackbarHostState.showSnackbar("Ponto já registrado há menos de 1 minuto.")
                 }
-                is ResultadoRegistro.IntervaloCurto -> avisoIntervalo = resultado.minutosDescanso
+                is ResultadoRegistro.IntervaloCurto -> bloqueio = resultado
             }
         }
     }
@@ -115,61 +107,8 @@ fun TelaPrincipal(
                 title = { Text("PontoZF", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                actions = {
-                    IconButton(onClick = {
-                        val novoEstado = !biometriaAtiva
-                        viewModel.definirBiometria(novoEstado)
-                        escopo.launch {
-                            snackbarHostState.showSnackbar(
-                                if (novoEstado) "Confirmação por digital ativada."
-                                else "Confirmação por digital desativada."
-                            )
-                        }
-                    }) {
-                        Icon(
-                            Icons.Default.Fingerprint,
-                            contentDescription = "Confirmação por digital",
-                            tint = if (biometriaAtiva) {
-                                MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.4f)
-                            }
-                        )
-                    }
-                    IconButton(onClick = { menuTemaAberto = true }) {
-                        Icon(
-                            imageVector = when (tema) {
-                                Tema.SISTEMA -> Icons.Default.BrightnessAuto
-                                Tema.CLARO -> Icons.Default.LightMode
-                                Tema.ESCURO -> Icons.Default.DarkMode
-                            },
-                            contentDescription = "Tema"
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = menuTemaAberto,
-                        onDismissRequest = { menuTemaAberto = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Seguir o sistema") },
-                            leadingIcon = { Icon(Icons.Default.BrightnessAuto, null) },
-                            onClick = { viewModel.definirTema(Tema.SISTEMA); menuTemaAberto = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Tema claro") },
-                            leadingIcon = { Icon(Icons.Default.LightMode, null) },
-                            onClick = { viewModel.definirTema(Tema.CLARO); menuTemaAberto = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Tema escuro") },
-                            leadingIcon = { Icon(Icons.Default.DarkMode, null) },
-                            onClick = { viewModel.definirTema(Tema.ESCURO); menuTemaAberto = false }
-                        )
-                    }
-                }
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         },
         bottomBar = {
@@ -186,6 +125,12 @@ fun TelaPrincipal(
                     icon = { Icon(Icons.Default.History, contentDescription = null) },
                     label = { Text("Histórico") }
                 )
+                NavigationBarItem(
+                    selected = abaAtual == Aba.AJUSTES,
+                    onClick = { abaAtual = Aba.AJUSTES },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text("Ajustes") }
+                )
             }
         }
     ) { padding ->
@@ -200,29 +145,41 @@ fun TelaPrincipal(
                 pontos = pontos,
                 modifier = Modifier.padding(padding)
             )
+            Aba.AJUSTES -> ConteudoAjustes(
+                tema = tema,
+                aoDefinirTema = viewModel::definirTema,
+                biometriaAtiva = biometriaAtiva,
+                aoDefinirBiometria = viewModel::definirBiometria,
+                aoAdicionarManual = { timestamp ->
+                    if (timestamp > System.currentTimeMillis()) {
+                        escopo.launch {
+                            snackbarHostState.showSnackbar("Não é possível adicionar um registro no futuro.")
+                        }
+                    } else {
+                        viewModel.inserirManual(timestamp)
+                        escopo.launch { snackbarHostState.showSnackbar("Registro adicionado.") }
+                    }
+                },
+                modifier = Modifier.padding(padding)
+            )
         }
     }
 
-    avisoIntervalo?.let { minutos ->
+    bloqueio?.let { resultado ->
+        val (titulo, texto) = when (resultado) {
+            is ResultadoRegistro.IntervaloCurto ->
+                "Retorno bloqueado" to
+                    "O intervalo mínimo é de 1 hora e 4 minutos. " +
+                    "Você poderá registrar o retorno a partir das ${resultado.liberadoEm.paraHora()}."
+            else -> return@let
+        }
         AlertDialog(
-            onDismissRequest = { avisoIntervalo = null },
+            onDismissRequest = { bloqueio = null },
             icon = { Icon(Icons.Default.WarningAmber, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Intervalo menor que 1 hora") },
-            text = {
-                Text(
-                    "Você está voltando do intervalo com apenas $minutos minutos de descanso. " +
-                        "A CLT exige no mínimo 1 hora de intervalo — voltar antes pode gerar " +
-                        "problemas para você e para a empresa junto ao Ministério do Trabalho.\n\n" +
-                        "Deseja registrar mesmo assim?"
-                )
-            },
+            title = { Text(titulo) },
+            text = { Text(texto) },
             confirmButton = {
-                TextButton(onClick = { avisoIntervalo = null; registrar(forcar = true) }) {
-                    Text("Registrar assim mesmo")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { avisoIntervalo = null }) { Text("Cancelar") }
+                TextButton(onClick = { bloqueio = null }) { Text("Entendi") }
             }
         )
     }

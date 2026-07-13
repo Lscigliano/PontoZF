@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp PontoZF.apk \"/c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/PontoZF.apk\")",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

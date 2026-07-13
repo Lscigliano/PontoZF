@@ -8,8 +8,8 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 ### Registro de ponto (aba Hoje)
 - **Registrar Ponto com um toque**: grava exatamente a hora atual do celular (ex.: `08:00`, `12:00`, `13:05`).
-- **Confirmação por digital (opcional)**: ícone de impressão digital na barra superior liga/desliga a exigência de biometria; com ela ativa, o registro só é gravado após reconhecer a digital. Se o aparelho não tiver biometria cadastrada, o registro é liberado normalmente.
-- **Aviso de intervalo curto**: se você sair para o almoço e tentar voltar com menos de **1 hora** de descanso (ex.: sair 12:00 e voltar 12:40), o app avisa que isso fere o intervalo mínimo da CLT e pede confirmação antes de registrar.
+- **Confirmação por digital (opcional)**: com a opção ativa (aba Ajustes), o leitor de digital aparece na tela e o ponto só é gravado após reconhecer a digital. Se o aparelho não tiver biometria disponível, o registro é liberado normalmente.
+- **Bloqueio de retorno de intervalo**: o retorno do almoço exige no mínimo **1 hora e 4 minutos** de descanso (saiu 11:51 → só volta a partir de 12:55). Antes disso o registro é bloqueado, sem exceção — o app informa o horário liberado.
 - **Proteção contra toque duplo**: registros com menos de 1 minuto de diferença são bloqueados.
 - **Relógio ao vivo** com data por extenso em português.
 
@@ -29,15 +29,20 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 - **Total de horas por mês** e **por dia**, com os horários batidos de cada dia.
 - **Exportar mês**: ícone de compartilhar ao lado de cada mês gera um texto com os registros dia a dia e os totais, enviável por WhatsApp, e-mail ou salvo em arquivo.
 
+### Ajustes (aba Ajustes)
+- **Registro manual**: adiciona um ponto esquecido escolhendo data e hora (ex.: a entrada 08:01 que não foi batida) — é a válvula de escape para os bloqueios automáticos.
+- **Confirmação por digital**: liga/desliga a exigência de biometria no registro.
+- **Aparência**: tema claro, escuro ou seguir o sistema.
+
 ### Geral
 - **Dados 100% locais**: tudo fica salvo no aparelho (banco SQLite via Room), funciona offline e não depende de servidor.
-- **Tema azul e branco**, com opção de **tema escuro** ou de **seguir o sistema** (menu na barra superior).
 - Preferências (tema, biometria) persistidas entre sessões.
 
 ## Histórico de versões
 
 | Versão | Novidades |
 |---|---|
+| **1.4** | Aba Ajustes com registro manual (data/hora); bloqueio rígido do retorno de intervalo (mínimo 1h04); leitor de digital sempre visível ao registrar |
 | **1.3** | Confirmação por digital no registro; exportação do histórico por mês; build movido para fora do OneDrive |
 | **1.2** | Linha do tempo do dia na aba Hoje, com previsões de intervalo e fim de jornada |
 | **1.1** | Aba Histórico com pontos agrupados por mês e navegação inferior (Hoje / Histórico) |
@@ -105,9 +110,10 @@ app/src/main/java/com/pontozf/
 │   ├── PontoDao.kt          # Consultas ao banco
 │   └── PontoDatabase.kt     # Configuração do Room
 └── ui/
-    ├── TelaPrincipal.kt     # Abas Hoje/Histórico, relógio, botão de registro, diálogos
+    ├── TelaPrincipal.kt     # Abas Hoje/Histórico/Ajustes, relógio, botão de registro, diálogos
     ├── LinhaDoTempo.kt      # Linha do tempo do dia (nós, trechos e previsões)
     ├── TelaHistorico.kt     # Histórico por mês + exportação
+    ├── TelaAjustes.kt       # Registro manual, biometria e tema
     ├── Comum.kt             # Formatadores e cálculo de horas compartilhados
     └── theme/               # Cores azul/branco + tema escuro
 ```
