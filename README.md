@@ -28,6 +28,25 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 Para gerar um APK instalável: **Build → Build App Bundle(s) / APK(s) → Build APK(s)**.
 O arquivo fica em `app/build/outputs/apk/debug/app-debug.apk` — basta copiar para o celular e instalar.
 
+### Compilando pela linha de comando (máquina com Sophos/antivírus corporativo)
+
+Antivírus corporativos podem travar o cache do Gradle durante o build
+(erro "Could not move temporary workspace"). Use o script que contorna isso:
+
+```bash
+./compilar-apk.sh   # no Git Bash, dentro da pasta do projeto
+```
+
+Ele repete o build completando manualmente as movimentações de cache que o
+antivírus impediu, até o APK sair. Outras particularidades desta configuração:
+
+- `android.overridePathCheck=true` no `gradle.properties`: necessário porque o
+  caminho do projeto contém acentos ("Área de Trabalho").
+- Se o caminho com acentos causar problemas, compile por uma *junction* sem
+  acentos: `mklink /J C:\Users\SEU_USUARIO\PontoZF "caminho\real\do\projeto"`.
+- O `local.properties` (não versionado) deve apontar para o SDK com barras
+  normais, ex.: `sdk.dir=C:/Users/SEU_USUARIO/AppData/Local/Android/Sdk`.
+
 ## Estrutura do projeto
 
 ```
