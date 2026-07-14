@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -64,6 +65,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pontozf.ARQUIVO_HISTORICO_ERROS
 import com.pontozf.BuildConfig
+import com.pontozf.INTERVALO_1H30_MIN
+import com.pontozf.INTERVALO_1H_MIN
 import com.pontozf.Tema
 import com.pontozf.data.Ponto
 import java.io.File
@@ -86,6 +89,8 @@ fun ConteudoAjustes(
     aoDefinirTema: (Tema) -> Unit,
     biometriaAtiva: Boolean,
     aoDefinirBiometria: (Boolean) -> Unit,
+    intervaloMinutos: Int,
+    aoDefinirIntervalo: (Int) -> Unit,
     pontos: List<Ponto>,
     aoAjustarDia: (LocalDate, List<Long>) -> Unit,
     modifier: Modifier = Modifier
@@ -131,6 +136,45 @@ fun ConteudoAjustes(
                     )
                 }
                 Switch(checked = biometriaAtiva, onCheckedChange = aoDefinirBiometria)
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(Modifier.padding(vertical = 4.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconeTonal(Icons.Default.Restaurant)
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text("Ajuste de intervalo", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Duração do seu intervalo de almoço",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+                OpcaoIntervalo(
+                    rotulo = "1 hora",
+                    descricao = "Retorno liberado a partir de 1h01 de intervalo",
+                    selecionado = intervaloMinutos != INTERVALO_1H30_MIN,
+                    aoSelecionar = { aoDefinirIntervalo(INTERVALO_1H_MIN) }
+                )
+                OpcaoIntervalo(
+                    rotulo = "1 hora e 30 minutos",
+                    descricao = "Pode voltar antes se quiser, nunca antes de 1h01",
+                    selecionado = intervaloMinutos == INTERVALO_1H30_MIN,
+                    aoSelecionar = { aoDefinirIntervalo(INTERVALO_1H30_MIN) }
+                )
             }
         }
 
@@ -215,7 +259,11 @@ fun ConteudoAjustes(
                 LinhaSobre(
                     icone = Icons.Default.Schedule,
                     titulo = "Jornada configurada",
-                    detalhe = "8h48 por dia • intervalo mínimo de 1h01"
+                    detalhe = if (intervaloMinutos == INTERVALO_1H30_MIN) {
+                        "8h48 por dia • intervalo de 1h30 (mínimo de 1h01)"
+                    } else {
+                        "8h48 por dia • intervalo mínimo de 1h01"
+                    }
                 )
                 LinhaSobre(
                     icone = Icons.Default.Code,
@@ -469,6 +517,33 @@ private fun LinhaSobre(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
+    }
+}
+
+/** Linha de opção do intervalo: rótulo + explicação e botão de rádio. */
+@Composable
+private fun OpcaoIntervalo(
+    rotulo: String,
+    descricao: String,
+    selecionado: Boolean,
+    aoSelecionar: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = aoSelecionar)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(rotulo, fontWeight = FontWeight.SemiBold)
+            Text(
+                descricao,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+        RadioButton(selected = selecionado, onClick = aoSelecionar)
     }
 }
 

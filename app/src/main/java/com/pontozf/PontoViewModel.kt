@@ -29,9 +29,18 @@ import java.time.format.DateTimeFormatter
 private val Context.dataStore by preferencesDataStore(name = "config")
 private val CHAVE_TEMA = intPreferencesKey("tema")
 private val CHAVE_BIOMETRIA = booleanPreferencesKey("biometria")
+private val CHAVE_INTERVALO = intPreferencesKey("intervalo_minutos")
 
-/** Intervalo mínimo entre a saída para descanso e o retorno: 1 hora e 1 minuto. */
+/**
+ * Intervalo mínimo legal entre a saída para descanso e o retorno: 1 hora e
+ * 1 minuto. Vale para TODOS, independentemente da duração configurada em
+ * Ajustes — menos de 1 hora de descanso gera problema trabalhista.
+ */
 const val INTERVALO_MINIMO_MS = 61 * 60 * 1000L
+
+/** Durações de intervalo configuráveis em Ajustes (em minutos). */
+const val INTERVALO_1H_MIN = 61
+const val INTERVALO_1H30_MIN = 90
 
 /** Bloqueio de toque duplo acidental no botão. */
 const val BLOQUEIO_TOQUE_DUPLO_MS = 60 * 1000L
@@ -135,12 +144,52 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Duração do intervalo configurada em Ajustes: 61 (padrão) ou 90 minutos. */
+    val intervaloMinutos: StateFlow<Int> = dataStore.data
+        .map { prefs -> prefs[CHAVE_INTERVALO] ?: INTERVALO_1H_MIN }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, INTERVALO_1H_MIN)
+
+    /**
+     * Troca a duração do intervalo e realinha os lembretes de hoje na hora:
+     * o "Hora de voltar!" (se estiver em intervalo agora) e o "Hora de ir
+     * embora!" (a previsão de fim da jornada muda junto com o intervalo).
+     */
+    fun definirIntervalo(minutos: Int) {
+        viewModelScope.launch {
+            dataStore.edit { it[CHAVE_INTERVALO] = minutos }
+
+            val agora = System.currentTimeMillis()
+            val pontosHoje = pontosDeHoje()
+
+            // Está no intervalo do almoço agora (2º ponto foi o último):
+            // reagenda o lembrete para a nova duração. Se o novo horário já
+            // passou, só cancela — sem notificação atrasada do nada.
+            if (pontosHoje.size == 2) {
+                val saida = pontosHoje.last().timestamp
+                val quando = saida + minutos * 60_000L - 60_000L
+                if (quando > agora) {
+                    agendarLembreteIntervalo(
+                        getApplication(),
+                        quando = quando,
+                        texto = textoLembreteIntervalo(minutos, saida)
+                    )
+                } else {
+                    cancelarLembreteIntervalo(getApplication())
+                }
+            }
+
+            reagendarLembreteFim(pontosHoje, agora, minutos)
+        }
+    }
+
     /**
      * Registra o ponto com a hora atual do celular.
      *
      * Regras (bloqueios, sem exceção pelo botão):
      * - Menos de 1 minuto desde o último ponto: toque duplo acidental.
      * - Retorno de intervalo com menos de 1h01 de descanso: bloqueado.
+     *   O bloqueio de 1h01 vale mesmo para quem configurou intervalo de 1h30
+     *   — quem faz 1h30 pode voltar antes, mas nunca antes de 1h01.
      *
      * Situações legítimas fora das regras (saída antecipada autorizada,
      * entrada esquecida etc.) são resolvidas pelo registro manual em Ajustes.
@@ -148,10 +197,7 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
     fun registrar(aoResultado: (ResultadoRegistro) -> Unit) {
         viewModelScope.launch {
             val agora = System.currentTimeMillis()
-            val zona = ZoneId.systemDefault()
-            val inicioDoDia = LocalDate.now(zona).atStartOfDay(zona).toInstant().toEpochMilli()
-            val fimDoDia = LocalDate.now(zona).plusDays(1).atStartOfDay(zona).toInstant().toEpochMilli() - 1
-            val pontosHoje = dao.entre(inicioDoDia, fimDoDia)
+            val pontosHoje = pontosDeHoje()
             val ultimo = pontosHoje.lastOrNull()
 
             if (ultimo != null && agora - ultimo.timestamp < BLOQUEIO_TOQUE_DUPLO_MS) {
@@ -170,23 +216,42 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
 
             dao.inserir(Ponto(timestamp = agora))
 
-            // Saída para o intervalo (2º ponto do dia): lembra de voltar em 1 hora.
+            // Saída para o intervalo (2º ponto do dia): lembra de voltar
+            // 1 minuto antes do fim do intervalo configurado.
             if (pontosHoje.size + 1 == 2) {
-                val horaRetorno = Instant.ofEpochMilli(agora + INTERVALO_MINIMO_MS)
-                    .atZone(zona)
-                    .format(DateTimeFormatter.ofPattern("HH:mm"))
+                val minutos = intervaloMinutos.value
                 agendarLembreteIntervalo(
                     getApplication(),
-                    quando = agora + 60 * 60 * 1000L,
-                    horaRetorno = horaRetorno
+                    quando = agora + minutos * 60_000L - 60_000L,
+                    texto = textoLembreteIntervalo(minutos, saidaIntervalo = agora)
                 )
             } else {
                 cancelarLembreteIntervalo(getApplication())
             }
 
-            reagendarLembreteFim(pontosHoje + Ponto(timestamp = agora), agora)
+            reagendarLembreteFim(pontosHoje + Ponto(timestamp = agora), agora, intervaloMinutos.value)
 
             aoResultado(ResultadoRegistro.Sucesso)
+        }
+    }
+
+    /** Pontos registrados hoje, em ordem. */
+    private suspend fun pontosDeHoje(): List<Ponto> {
+        val zona = ZoneId.systemDefault()
+        val inicio = LocalDate.now(zona).atStartOfDay(zona).toInstant().toEpochMilli()
+        val fim = LocalDate.now(zona).plusDays(1).atStartOfDay(zona).toInstant().toEpochMilli() - 1
+        return dao.entre(inicio, fim)
+    }
+
+    /** Texto do lembrete "Hora de voltar!", conforme a duração configurada. */
+    private fun textoLembreteIntervalo(minutos: Int, saidaIntervalo: Long): String {
+        val horaRetorno = Instant.ofEpochMilli(saidaIntervalo + minutos * 60_000L)
+            .atZone(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("HH:mm"))
+        return if (minutos >= INTERVALO_1H30_MIN) {
+            "Seu intervalo de 1h30 está acabando. Retorno previsto às $horaRetorno."
+        } else {
+            "Seu intervalo completou 1 hora. Retorno liberado a partir das $horaRetorno."
         }
     }
 
@@ -207,7 +272,8 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
             if (data == LocalDate.now(zona)) {
                 reagendarLembreteFim(
                     horarios.sorted().map { Ponto(timestamp = it) },
-                    System.currentTimeMillis()
+                    System.currentTimeMillis(),
+                    intervaloMinutos.value
                 )
             }
         }
@@ -217,8 +283,8 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
      * Mantém o aviso "hora de ir embora" alinhado à previsão de fim da jornada:
      * agenda quando há previsão futura, cancela quando a jornada foi concluída.
      */
-    private fun reagendarLembreteFim(pontosDoDia: List<Ponto>, agora: Long) {
-        val fimPrevisto = previsaoFimDaJornada(pontosDoDia)
+    private fun reagendarLembreteFim(pontosDoDia: List<Ponto>, agora: Long, intervaloMin: Int) {
+        val fimPrevisto = previsaoFimDaJornada(pontosDoDia, intervaloMin * 60_000L)
         if (fimPrevisto != null && fimPrevisto > agora) {
             agendarLembreteFim(getApplication(), fimPrevisto)
         } else {

@@ -10,14 +10,14 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 - **Painel do dia**: chip de situação com cor semântica (verde "Trabalhando desde 08:01", âmbar "Em intervalo", azul "Jornada concluída") e três cartões de resumo — **Trabalhado**, **Restante** e **Fim previsto** — atualizados ao vivo.
 - **Registrar Ponto com um toque**: botão em destaque com ícone (que vira uma digital quando a biometria está ativa); grava exatamente a hora atual do celular.
 - **Confirmação por digital (opcional)**: com a opção ativa (aba Ajustes), o leitor de digital aparece na tela e o ponto só é gravado após reconhecer a digital. Se o aparelho não tiver biometria disponível, o registro é liberado normalmente.
-- **Bloqueio de retorno de intervalo**: o retorno do almoço exige no mínimo **1 hora e 1 minuto** de descanso (saiu 12:00 → só volta a partir de 13:01). Antes disso o registro é bloqueado, sem exceção — o app informa o horário liberado.
+- **Bloqueio de retorno de intervalo**: o retorno do almoço exige no mínimo **1 hora e 1 minuto** de descanso (saiu 12:00 → só volta a partir de 13:01). Antes disso o registro é bloqueado, sem exceção — o app informa o horário liberado. O mínimo de 1h01 vale mesmo para quem configura intervalo de 1h30 (menos de 1 hora de descanso gera problema trabalhista).
 - **Proteção contra toque duplo**: registros com menos de 1 minuto de diferença são bloqueados.
 - **Relógio ao vivo** com data por extenso em português.
 
 ### Linha do tempo do dia (aba Hoje)
 - Pontos do dia exibidos como **linha do tempo vertical**: entrada (seta verde) e saída (seta vermelha) como nós, com o último ponto batido destacado por um anel azul.
 - **Duração de cada trecho** entre os nós: "Turno de 04h 00m", "Intervalo de 01h 00m".
-- **Previsões em cinza** do restante da jornada (baseadas na jornada de **8h48** — compensação do sábado — com intervalo de 1h01 após 4h de turno):
+- **Previsões em cinza** do restante da jornada (baseadas na jornada de **8h48** — compensação do sábado — com o intervalo configurado em Ajustes, 1h01 ou 1h30, após 4h de turno):
   - Bateu só a entrada → previsão de saída para o intervalo, de retorno e de fim da jornada;
   - No intervalo → previsão de retorno e de fim da jornada;
   - Voltou do intervalo → previsão de fim da jornada;
@@ -33,12 +33,13 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 ### Ajustes (aba Ajustes)
 - **Ajustar pontos do dia**: escolha o dia no calendário e corrija os **4 períodos fixos** — Entrada, Saída almoço, Retorno almoço e Saída trabalho — com horários digitados pelo teclado. Os campos vêm pré-preenchidos com o que já foi batido; a tela valida ordem crescente, preenchimento sem pular períodos e impede horários no futuro. É a válvula de escape para os bloqueios automáticos.
 - **Confirmação por digital**: liga/desliga a exigência de biometria no registro.
+- **Ajuste de intervalo**: escolha a duração do seu almoço — **1 hora** (padrão: retorno liberado a partir de 1h01) ou **1 hora e 30 minutos** (pode voltar antes se quiser, nunca antes de 1h01). A opção muda as previsões da linha do tempo, o "Fim previsto" e os avisos "Hora de voltar!" e "Hora de ir embora!" — trocar no meio do dia realinha os lembretes na hora.
 - **Aparência**: tema claro, escuro ou seguir o sistema.
 - **Sobre**: versão/release instalada, desenvolvedor (Leonardo Scigliano) e atalho para o projeto no GitHub.
 - **Histórico de erros**: todo travamento fica gravado no aparelho com **data e hora** (arquivo `historico-erros.txt` na área interna do app); a tela mostra os registros e permite compartilhá-los. Além disso, na abertura seguinte a um travamento o app exibe o relatório completo com botão de compartilhar.
 
 ### Geral
-- **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para quando completar 1 hora — "Hora de voltar!", informando o horário liberado para o retorno.
+- **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para 1 minuto antes do fim do intervalo configurado (1h ou 1h30) — "Hora de voltar!", informando o horário do retorno.
 - **Aviso de fim da jornada**: quando chega a previsão de fim (8h48 completas), o celular vibra e notifica — "Hora de ir embora! 🏠". O aviso se realinha a cada ponto batido e a ajustes manuais do dia.
 - **Aviso de atualização**: ao voltar ao app, ele consulta as releases do GitHub; se houver versão mais nova, oferece o download na hora — e **fecha o app sozinho** ao baixar, para a instalação acontecer com segurança.
 - **Atualização obrigatória**: se a release mais recente declarar `minVersao: X.Y` na descrição, quem estiver abaixo dessa versão vê o aviso **sem o botão "Depois"** — só continua usando o app depois de atualizar. O Android, por sua vez, bloqueia downgrades nativamente (o `versionCode` cresce a cada release).
@@ -49,6 +50,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.10** | Ajuste de intervalo nos Ajustes: 1h (padrão) ou 1h30 — previsões, "Fim previsto" e lembretes acompanham a escolha; o mínimo legal de 1h01 continua bloqueando nos dois modos |
 | **1.9** | Renomeado de PontoZF para **Easy Point** (nome visível e repositório; identificador `com.pontozf` mantido) |
 | **1.8.2** | Atualização obrigatória via marcador `minVersao:` na release; releases antigas marcadas como pré-release no GitHub |
 | **1.8.1** | Correção do crash de alarme exato no Android 14+ (USE_EXACT_ALARM + fallback aproximado); histórico de erros permanente com data/hora em Ajustes |
@@ -73,7 +75,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 - Kotlin + Jetpack Compose (Material 3)
 - Room (banco de dados local SQLite)
-- DataStore (preferências: tema e biometria)
+- DataStore (preferências: tema, biometria e duração do intervalo)
 - AndroidX Biometric (confirmação por digital)
 - Android 8.0+ (minSdk 26)
 
@@ -135,7 +137,7 @@ app/src/main/java/com/pontozf/
     ├── TelaPrincipal.kt     # Abas Hoje/Histórico/Ajustes, relógio, botão de registro, diálogos
     ├── LinhaDoTempo.kt      # Linha do tempo do dia (nós, trechos e previsões)
     ├── TelaHistorico.kt     # Histórico por mês + exportação
-    ├── TelaAjustes.kt       # Registro manual, biometria e tema
+    ├── TelaAjustes.kt       # Registro manual, biometria, intervalo e tema
     ├── Comum.kt             # Formatadores e cálculo de horas compartilhados
     └── theme/               # Cores azul/branco + tema escuro
 ```

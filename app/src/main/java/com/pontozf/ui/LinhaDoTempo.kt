@@ -30,10 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pontozf.data.Ponto
 
-/** Jornada de 8h48 (compensação do sábado), com intervalo mínimo de 1h01 após 4h de turno. */
+/** Jornada de 8h48 (compensação do sábado), com intervalo após 4h de turno. */
 internal const val JORNADA_MS = (8 * 60 + 48) * 60 * 1000L
 private const val TURNO_ATE_INTERVALO_MS = 4 * 60 * 60 * 1000L
-private const val INTERVALO_PADRAO_MS = 61 * 60 * 1000L
 
 internal sealed interface ItemLinha {
     data class Registro(val ponto: Ponto, val entrada: Boolean, val destaque: Boolean) : ItemLinha
@@ -57,8 +56,8 @@ internal fun trabalhadoComAndamento(pontosHoje: List<Ponto>, agora: Long): java.
 }
 
 /** Horário previsto para o fim da jornada, ou null se concluída/sem registros. */
-internal fun previsaoFimDaJornada(pontosHoje: List<Ponto>): Long? =
-    montarLinhaDoTempo(pontosHoje)
+internal fun previsaoFimDaJornada(pontosHoje: List<Ponto>, intervaloMs: Long): Long? =
+    montarLinhaDoTempo(pontosHoje, intervaloMs)
         .filterIsInstance<ItemLinha.Previsao>()
         .lastOrNull()
         ?.timestamp
@@ -66,9 +65,10 @@ internal fun previsaoFimDaJornada(pontosHoje: List<Ponto>): Long? =
 /**
  * Monta a linha do tempo do dia: os pontos batidos, a duração de cada
  * turno/intervalo entre eles e as previsões (cinza) do restante da jornada,
- * baseadas na jornada padrão de 8h com 1h de intervalo.
+ * baseadas na jornada de 8h48 com o intervalo configurado em Ajustes
+ * ([intervaloMs]: 1h01 ou 1h30).
  */
-internal fun montarLinhaDoTempo(pontosHoje: List<Ponto>): List<ItemLinha> {
+internal fun montarLinhaDoTempo(pontosHoje: List<Ponto>, intervaloMs: Long): List<ItemLinha> {
     val ordenados = pontosHoje.sortedBy { it.timestamp }
     if (ordenados.isEmpty()) return emptyList()
 
@@ -93,11 +93,11 @@ internal fun montarLinhaDoTempo(pontosHoje: List<Ponto>): List<ItemLinha> {
     if (trabalhando && ordenados.size == 1) {
         // Início da jornada: prevê intervalo e fim do dia.
         val saidaPrevista = ultimo.timestamp + TURNO_ATE_INTERVALO_MS
-        val retornoPrevisto = saidaPrevista + INTERVALO_PADRAO_MS
+        val retornoPrevisto = saidaPrevista + intervaloMs
         val restante = JORNADA_MS - TURNO_ATE_INTERVALO_MS
         itens += ItemLinha.Trecho("Turno de ${formatarHm(TURNO_ATE_INTERVALO_MS)}")
         itens += ItemLinha.Previsao(saidaPrevista, "Previsão de saída para o intervalo", entrada = false)
-        itens += ItemLinha.Trecho("Intervalo de ${formatarHm(INTERVALO_PADRAO_MS)}")
+        itens += ItemLinha.Trecho("Intervalo de ${formatarHm(intervaloMs)}")
         itens += ItemLinha.Previsao(retornoPrevisto, "Previsão de retorno do intervalo", entrada = true)
         itens += ItemLinha.Trecho("Turno de ${formatarHm(restante)}")
         itens += ItemLinha.Previsao(retornoPrevisto + restante, "Previsão de fim da jornada", entrada = false)
@@ -112,8 +112,8 @@ internal fun montarLinhaDoTempo(pontosHoje: List<Ponto>): List<ItemLinha> {
         // Saiu (intervalo ou fim do dia): se ainda falta jornada, assume intervalo.
         val restante = JORNADA_MS - trabalhado
         if (restante > 0) {
-            val retornoPrevisto = ultimo.timestamp + INTERVALO_PADRAO_MS
-            itens += ItemLinha.Trecho("Intervalo de ${formatarHm(INTERVALO_PADRAO_MS)}")
+            val retornoPrevisto = ultimo.timestamp + intervaloMs
+            itens += ItemLinha.Trecho("Intervalo de ${formatarHm(intervaloMs)}")
             itens += ItemLinha.Previsao(retornoPrevisto, "Previsão de retorno do intervalo", entrada = true)
             itens += ItemLinha.Trecho("Turno de ${formatarHm(restante)}")
             itens += ItemLinha.Previsao(retornoPrevisto + restante, "Previsão de fim da jornada", entrada = false)

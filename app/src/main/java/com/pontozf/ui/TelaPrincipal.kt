@@ -87,6 +87,7 @@ fun TelaPrincipal(
     val pontos by viewModel.pontos.collectAsStateWithLifecycle()
     val tema by viewModel.tema.collectAsStateWithLifecycle()
     val biometriaAtiva by viewModel.biometria.collectAsStateWithLifecycle()
+    val intervaloMinutos by viewModel.intervaloMinutos.collectAsStateWithLifecycle()
     val atualizacao by viewModel.atualizacao.collectAsStateWithLifecycle()
     val contexto = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -162,6 +163,7 @@ fun TelaPrincipal(
             Aba.HOJE -> ConteudoHoje(
                 pontos = pontos,
                 biometriaAtiva = biometriaAtiva,
+                intervaloMinutos = intervaloMinutos,
                 aoRegistrar = { registrarComConfirmacao() },
                 modifier = Modifier.padding(padding)
             )
@@ -174,6 +176,8 @@ fun TelaPrincipal(
                 aoDefinirTema = viewModel::definirTema,
                 biometriaAtiva = biometriaAtiva,
                 aoDefinirBiometria = viewModel::definirBiometria,
+                intervaloMinutos = intervaloMinutos,
+                aoDefinirIntervalo = viewModel::definirIntervalo,
                 pontos = pontos,
                 aoAjustarDia = { data, horarios ->
                     viewModel.ajustarDia(data, horarios)
@@ -248,6 +252,7 @@ fun TelaPrincipal(
 private fun ConteudoHoje(
     pontos: List<Ponto>,
     biometriaAtiva: Boolean,
+    intervaloMinutos: Int,
     aoRegistrar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -265,7 +270,7 @@ private fun ConteudoHoje(
 
     val trabalhado = trabalhadoComAndamento(pontosHoje, agora)
     val restanteMs = (JORNADA_MS - trabalhado.toMillis()).coerceAtLeast(0)
-    val fimPrevisto = previsaoFimDaJornada(pontosHoje)
+    val fimPrevisto = previsaoFimDaJornada(pontosHoje, intervaloMinutos * 60_000L)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -362,7 +367,7 @@ private fun ConteudoHoje(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Box(Modifier.padding(horizontal = 8.dp, vertical = 12.dp)) {
-                        LinhaDoTempoDia(itens = montarLinhaDoTempo(pontosHoje))
+                        LinhaDoTempoDia(itens = montarLinhaDoTempo(pontosHoje, intervaloMinutos * 60_000L))
                     }
                 }
             }

@@ -33,14 +33,16 @@ class LembreteReceiver : BroadcastReceiver() {
         )
 
         val tipo = intent.getStringExtra("tipo") ?: TIPO_INTERVALO
-        val horaRetorno = intent.getStringExtra("horaRetorno") ?: ""
         val (titulo, texto) = when (tipo) {
             TIPO_FIM ->
                 "Hora de ir embora! 🏠" to
                     "Sua jornada de 8h48 está completa. Registre a saída e bom descanso!"
             else ->
                 "Hora de voltar!" to
-                    "Seu intervalo completou 1 hora. Retorno liberado a partir das $horaRetorno."
+                    // O texto vem pronto de quem agendou (varia com a duração
+                    // do intervalo configurada em Ajustes: 1h01 ou 1h30).
+                    (intent.getStringExtra("texto")
+                        ?: "Seu intervalo terminou. Hora de voltar ao trabalho!")
         }
 
         val abrirApp = PendingIntent.getActivity(
@@ -69,10 +71,10 @@ class LembreteReceiver : BroadcastReceiver() {
     }
 }
 
-private fun pendenteDoLembrete(context: Context, tipo: String, id: Int, horaRetorno: String = ""): PendingIntent {
+private fun pendenteDoLembrete(context: Context, tipo: String, id: Int, texto: String = ""): PendingIntent {
     val intent = Intent(context, LembreteReceiver::class.java)
         .putExtra("tipo", tipo)
-        .putExtra("horaRetorno", horaRetorno)
+        .putExtra("texto", texto)
     return PendingIntent.getBroadcast(
         context,
         id,
@@ -98,9 +100,9 @@ private fun agendar(context: Context, quando: Long, pendente: PendingIntent) {
     }
 }
 
-/** Agenda o aviso de fim do intervalo (1 hora após a saída para o almoço). */
-fun agendarLembreteIntervalo(context: Context, quando: Long, horaRetorno: String) {
-    agendar(context, quando, pendenteDoLembrete(context, TIPO_INTERVALO, ID_ALARME_INTERVALO, horaRetorno))
+/** Agenda o aviso de fim do intervalo (1 minuto antes do retorno previsto). */
+fun agendarLembreteIntervalo(context: Context, quando: Long, texto: String) {
+    agendar(context, quando, pendenteDoLembrete(context, TIPO_INTERVALO, ID_ALARME_INTERVALO, texto))
 }
 
 fun cancelarLembreteIntervalo(context: Context) {
