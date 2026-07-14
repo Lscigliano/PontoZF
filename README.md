@@ -1,8 +1,8 @@
-# PontoZF
+# Easy Point
 
-Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e sempre disponível.
+Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e sempre disponível. (Antes chamado PontoZF; o identificador interno `com.pontozf` foi mantido para as atualizações preservarem os dados.)
 
-📥 **Download da versão mais recente:** [Releases](https://github.com/Lscigliano/PontoZF/releases) — baixe o `.apk` no celular, toque no arquivo e instale. Atualizações instalam por cima sem perder o histórico.
+📥 **Download da versão mais recente:** [Releases](https://github.com/Lscigliano/EasyPoint/releases) — baixe o `.apk` no celular, toque no arquivo e instale. Atualizações instalam por cima sem perder o histórico.
 
 ## Funcionalidades
 
@@ -49,6 +49,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.9** | Renomeado de PontoZF para **Easy Point** (nome visível e repositório; identificador `com.pontozf` mantido) |
 | **1.8.2** | Atualização obrigatória via marcador `minVersao:` na release; releases antigas marcadas como pré-release no GitHub |
 | **1.8.1** | Correção do crash de alarme exato no Android 14+ (USE_EXACT_ALARM + fallback aproximado); histórico de erros permanente com data/hora em Ajustes |
 | **1.8** | Aviso "Hora de ir embora!" com vibração na previsão de fim da jornada; linha do tempo somente leitura (correções só em Ajustes); paleta de cores refinada |
@@ -89,7 +90,7 @@ Para gerar um APK instalável: **Build → Build App Bundle(s) / APK(s) → Buil
 > `%LOCALAPPDATA%\PontoZF-build\app\outputs\apk\debug\app-debug.apk`
 > (o projeto mora no OneDrive, que travava os arquivos temporários do build —
 > ver `build.gradle.kts`). O script de build também deixa uma cópia
-> `PontoZF.apk` na raiz do projeto.
+> `EasyPoint.apk` na raiz do projeto.
 
 ### Compilando pela linha de comando (máquina com Sophos/antivírus corporativo)
 

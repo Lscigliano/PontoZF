@@ -65,7 +65,7 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
     fun verificarAtualizacao() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val conexao = URL("https://api.github.com/repos/Lscigliano/PontoZF/releases/latest")
+                val conexao = URL("https://api.github.com/repos/Lscigliano/EasyPoint/releases/latest")
                     .openConnection() as HttpURLConnection
                 conexao.connectTimeout = 10_000
                 conexao.readTimeout = 10_000

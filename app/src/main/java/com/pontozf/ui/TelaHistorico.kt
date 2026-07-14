@@ -43,7 +43,7 @@ private val FormatoDiaMes = DateTimeFormatter.ofPattern("dd/MM", LocalePtBr)
 private fun exportarMes(contexto: Context, mes: YearMonth, porDia: Map<LocalDate, List<Ponto>>) {
     val nomeMes = mes.format(FormatoMes).replaceFirstChar { it.uppercase(LocalePtBr) }
     val texto = buildString {
-        appendLine("PontoZF — $nomeMes")
+        appendLine("Easy Point — $nomeMes")
         appendLine()
         porDia.toSortedMap(compareBy { it }).forEach { (data, pontosDoDia) ->
             val horarios = pontosDoDia.sortedBy { it.timestamp }
@@ -57,7 +57,7 @@ private fun exportarMes(contexto: Context, mes: YearMonth, porDia: Map<LocalDate
     }
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, "PontoZF — $nomeMes")
+        putExtra(Intent.EXTRA_SUBJECT, "Easy Point — $nomeMes")
         putExtra(Intent.EXTRA_TEXT, texto)
     }
     contexto.startActivity(Intent.createChooser(intent, "Exportar $nomeMes"))

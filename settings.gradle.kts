@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "PontoZF"
+rootProject.name = "EasyPoint"
 include(":app")

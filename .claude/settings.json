@@ -3,7 +3,12 @@
     "allow": [
       "Bash(cp PontoZF.apk \"/c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/PontoZF.apk\")",
       "Bash(git commit -m ' *)",
-      "Bash(./gradlew.bat -q :app:dependencies --configuration debugRuntimeClasspath)"
+      "Bash(./gradlew.bat -q :app:dependencies --configuration debugRuntimeClasspath)",
+      "Bash(git credential *)",
+      "Bash(curl -s \"https://api.github.com/repos/Lscigliano/PontoZF/releases/latest\")",
+      "Bash(git remote *)",
+      "Bash(cp EasyPoint.apk \"/c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/EasyPoint.apk\")",
+      "Bash(rm -f \"/c/Users/leonardo.scigliano/OneDrive - Comercial Zaffari/Área de Trabalho/PontoZF.apk\" PontoZF.apk)"
     ]
   }
 }

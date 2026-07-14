@@ -128,7 +128,7 @@ fun TelaPrincipal(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("PontoZF", fontWeight = FontWeight.Bold) },
+                title = { Text("Easy Point", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -195,7 +195,7 @@ fun TelaPrincipal(
             },
             text = {
                 Text(
-                    "A versão ${nova.versao} do PontoZF está disponível " +
+                    "A versão ${nova.versao} do Easy Point está disponível " +
                         "(você usa a ${BuildConfig.VERSION_NAME}). " +
                         (if (nova.obrigatoria) {
                             "A sua versão tem um problema importante já corrigido — " +

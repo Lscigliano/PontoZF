@@ -30,7 +30,7 @@ class PontoApp : Application() {
             try {
                 val relatorio = buildString {
                     appendLine(
-                        "PontoZF ${BuildConfig.VERSION_NAME} — " +
+                        "Easy Point ${BuildConfig.VERSION_NAME} — " +
                             "${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}"
                     )
                     appendLine()

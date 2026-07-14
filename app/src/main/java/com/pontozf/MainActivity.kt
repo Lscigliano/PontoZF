@@ -135,7 +135,7 @@ private fun TelaDeErro(relatorio: String) {
             .padding(16.dp)
     ) {
         Text(
-            "O PontoZF travou na última abertura",
+            "O Easy Point travou na última abertura",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -150,7 +150,7 @@ private fun TelaDeErro(relatorio: String) {
             onClick = {
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "PontoZF — relatório de erro")
+                    putExtra(Intent.EXTRA_SUBJECT, "Easy Point — relatório de erro")
                     putExtra(Intent.EXTRA_TEXT, relatorio)
                 }
                 contexto.startActivity(Intent.createChooser(intent, "Compartilhar relatório"))

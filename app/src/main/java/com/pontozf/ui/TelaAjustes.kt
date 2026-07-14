@@ -204,7 +204,7 @@ fun ConteudoAjustes(
             Column(Modifier.padding(vertical = 4.dp)) {
                 LinhaSobre(
                     icone = Icons.Default.Info,
-                    titulo = "PontoZF",
+                    titulo = "Easy Point",
                     detalhe = "Versão ${BuildConfig.VERSION_NAME} (release v${BuildConfig.VERSION_NAME})"
                 )
                 LinhaSobre(
@@ -225,7 +225,7 @@ fun ConteudoAjustes(
                         contexto.startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://github.com/Lscigliano/PontoZF/releases")
+                                Uri.parse("https://github.com/Lscigliano/EasyPoint/releases")
                             )
                         )
                     }
@@ -385,7 +385,7 @@ fun ConteudoAjustes(
                     TextButton(onClick = {
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "PontoZF — histórico de erros")
+                            putExtra(Intent.EXTRA_SUBJECT, "Easy Point — histórico de erros")
                             putExtra(Intent.EXTRA_TEXT, textoErros)
                         }
                         contextoErros.startActivity(

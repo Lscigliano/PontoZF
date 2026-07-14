@@ -41,10 +41,10 @@ for i in 1 2 3 4 5 6 7 8; do
     echo "=== Tentativa $i ==="
     ./gradlew.bat assembleDebug --no-daemon
     if [ -f "$APK" ]; then
-        cp "$APK" PontoZF.apk
+        cp "$APK" EasyPoint.apk
         echo ""
         echo "APK gerado em: $APK"
-        echo "Cópia na raiz do projeto: PontoZF.apk"
+        echo "Cópia na raiz do projeto: EasyPoint.apk"
         exit 0
     fi
 done
