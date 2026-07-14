@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
@@ -56,11 +58,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.pontozf.ARQUIVO_HISTORICO_ERROS
 import com.pontozf.BuildConfig
 import com.pontozf.Tema
 import com.pontozf.data.Ponto
+import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -88,6 +94,7 @@ fun ConteudoAjustes(
     var dataEscolhida by remember { mutableStateOf<LocalDate?>(null) }
     var indiceEditando by remember { mutableStateOf<Int?>(null) }
     var erroAjuste by remember { mutableStateOf<String?>(null) }
+    var mostrarErros by remember { mutableStateOf(false) }
     val horarios = remember { mutableStateListOf<LocalTime?>(null, null, null, null) }
 
     Column(
@@ -223,6 +230,12 @@ fun ConteudoAjustes(
                         )
                     }
                 )
+                LinhaSobre(
+                    icone = Icons.Default.BugReport,
+                    titulo = "Histórico de erros",
+                    detalhe = "Registros de travamentos, com data e hora",
+                    aoClicar = { mostrarErros = true }
+                )
             }
         }
     }
@@ -337,6 +350,52 @@ fun ConteudoAjustes(
             },
             dismissButton = {
                 TextButton(onClick = { dataEscolhida = null }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    if (mostrarErros) {
+        val contextoErros = LocalContext.current
+        val textoErros = remember {
+            val arquivo = File(contextoErros.filesDir, ARQUIVO_HISTORICO_ERROS)
+            if (arquivo.exists()) arquivo.readText() else ""
+        }
+        AlertDialog(
+            onDismissRequest = { mostrarErros = false },
+            title = { Text("Histórico de erros") },
+            text = {
+                if (textoErros.isBlank()) {
+                    Text("Nenhum erro registrado até agora. 🎉")
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 400.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            textoErros,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                if (textoErros.isNotBlank()) {
+                    TextButton(onClick = {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "PontoZF — histórico de erros")
+                            putExtra(Intent.EXTRA_TEXT, textoErros)
+                        }
+                        contextoErros.startActivity(
+                            Intent.createChooser(intent, "Compartilhar histórico de erros")
+                        )
+                    }) { Text("Compartilhar") }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarErros = false }) { Text("Fechar") }
             }
         )
     }

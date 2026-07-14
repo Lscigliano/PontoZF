@@ -35,6 +35,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 - **Confirmação por digital**: liga/desliga a exigência de biometria no registro.
 - **Aparência**: tema claro, escuro ou seguir o sistema.
 - **Sobre**: versão/release instalada, desenvolvedor (Leonardo Scigliano) e atalho para o projeto no GitHub.
+- **Histórico de erros**: todo travamento fica gravado no aparelho com **data e hora** (arquivo `historico-erros.txt` na área interna do app); a tela mostra os registros e permite compartilhá-los. Além disso, na abertura seguinte a um travamento o app exibe o relatório completo com botão de compartilhar.
 
 ### Geral
 - **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para quando completar 1 hora — "Hora de voltar!", informando o horário liberado para o retorno.
@@ -47,6 +48,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.8.1** | Correção do crash de alarme exato no Android 14+ (USE_EXACT_ALARM + fallback aproximado); histórico de erros permanente com data/hora em Ajustes |
 | **1.8** | Aviso "Hora de ir embora!" com vibração na previsão de fim da jornada; linha do tempo somente leitura (correções só em Ajustes); paleta de cores refinada |
 | **1.7** | Visual profissional: painel do dia (chip de status + cartões Trabalhado/Restante/Fim previsto), botão de registro redesenhado, verde/âmbar semânticos, contagem de dias no Histórico e ícones tonais nos Ajustes |
 | **1.6** | Ajuste do dia pelos 4 períodos fixos (Entrada, Saída almoço, Retorno almoço, Saída trabalho) com validação; app fecha sozinho ao baixar atualização |

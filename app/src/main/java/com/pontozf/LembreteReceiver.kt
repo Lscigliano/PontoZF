@@ -89,7 +89,13 @@ private fun agendar(context: Context, quando: Long, pendente: PendingIntent) {
         Intent(context, MainActivity::class.java),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
-    alarmes.setAlarmClock(AlarmManager.AlarmClockInfo(quando, aoTocar), pendente)
+    try {
+        alarmes.setAlarmClock(AlarmManager.AlarmClockInfo(quando, aoTocar), pendente)
+    } catch (_: SecurityException) {
+        // Sem permissão de alarme exato (endurecida no Android 14+):
+        // agenda com janela aproximada de 10 min — o aviso não pode derrubar o app.
+        alarmes.setWindow(AlarmManager.RTC_WAKEUP, quando, 10 * 60 * 1000L, pendente)
+    }
 }
 
 /** Agenda o aviso de fim do intervalo (1 hora após a saída para o almoço). */
