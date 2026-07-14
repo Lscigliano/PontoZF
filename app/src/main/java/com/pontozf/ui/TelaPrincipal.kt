@@ -186,14 +186,24 @@ fun TelaPrincipal(
 
     atualizacao?.let { nova ->
         AlertDialog(
-            onDismissRequest = viewModel::dispensarAtualizacao,
+            onDismissRequest = {
+                if (!nova.obrigatoria) viewModel.dispensarAtualizacao()
+            },
             icon = { Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.primary) },
-            title = { Text("Nova versão disponível") },
+            title = {
+                Text(if (nova.obrigatoria) "Atualização obrigatória" else "Nova versão disponível")
+            },
             text = {
                 Text(
                     "A versão ${nova.versao} do PontoZF está disponível " +
-                        "(você usa a ${BuildConfig.VERSION_NAME}). Deseja baixar agora?\n\n" +
-                        "O aplicativo será fechado para a instalação acontecer com segurança."
+                        "(você usa a ${BuildConfig.VERSION_NAME}). " +
+                        (if (nova.obrigatoria) {
+                            "A sua versão tem um problema importante já corrigido — " +
+                                "é preciso atualizar para continuar usando o app."
+                        } else {
+                            "Deseja baixar agora?"
+                        }) +
+                        "\n\nO aplicativo será fechado para a instalação acontecer com segurança."
                 )
             },
             confirmButton = {
@@ -206,7 +216,9 @@ fun TelaPrincipal(
                 }) { Text("Baixar") }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::dispensarAtualizacao) { Text("Depois") }
+                if (!nova.obrigatoria) {
+                    TextButton(onClick = viewModel::dispensarAtualizacao) { Text("Depois") }
+                }
             }
         )
     }

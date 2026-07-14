@@ -38,8 +38,11 @@ const val BLOQUEIO_TOQUE_DUPLO_MS = 60 * 1000L
 
 enum class Tema { SISTEMA, CLARO, ESCURO }
 
-/** Nova versão do app disponível no GitHub. */
-data class Atualizacao(val versao: String, val url: String)
+/**
+ * Nova versão do app disponível no GitHub. [obrigatoria] quando a release
+ * declara "minVersao: X.Y" e a versão instalada está abaixo dela.
+ */
+data class Atualizacao(val versao: String, val url: String, val obrigatoria: Boolean)
 
 sealed interface ResultadoRegistro {
     data object Sucesso : ResultadoRegistro
@@ -77,8 +80,15 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
                 } else {
                     json.getString("html_url")
                 }
+                // "minVersao: X.Y" na descrição da release torna a atualização
+                // obrigatória para quem estiver abaixo dessa versão.
+                val minVersao = Regex("minVersao[:=]\\s*([0-9][0-9.]*)")
+                    .find(json.optString("body") ?: "")
+                    ?.groupValues?.get(1)
+                val obrigatoria = minVersao != null &&
+                    versaoMaisNova(minVersao, BuildConfig.VERSION_NAME)
                 if (versaoMaisNova(versaoRemota, BuildConfig.VERSION_NAME)) {
-                    _atualizacao.value = Atualizacao(versaoRemota, url)
+                    _atualizacao.value = Atualizacao(versaoRemota, url, obrigatoria)
                 }
             } catch (_: Exception) {
                 // Sem internet ou GitHub indisponível: segue sem aviso.

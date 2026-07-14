@@ -41,6 +41,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 - **Lembrete de fim do intervalo**: ao bater a saída para o almoço, o app agenda uma notificação no celular para quando completar 1 hora — "Hora de voltar!", informando o horário liberado para o retorno.
 - **Aviso de fim da jornada**: quando chega a previsão de fim (8h48 completas), o celular vibra e notifica — "Hora de ir embora! 🏠". O aviso se realinha a cada ponto batido e a ajustes manuais do dia.
 - **Aviso de atualização**: ao voltar ao app, ele consulta as releases do GitHub; se houver versão mais nova, oferece o download na hora — e **fecha o app sozinho** ao baixar, para a instalação acontecer com segurança.
+- **Atualização obrigatória**: se a release mais recente declarar `minVersao: X.Y` na descrição, quem estiver abaixo dessa versão vê o aviso **sem o botão "Depois"** — só continua usando o app depois de atualizar. O Android, por sua vez, bloqueia downgrades nativamente (o `versionCode` cresce a cada release).
 - **Dados 100% locais**: os registros ficam salvos no aparelho (banco SQLite via Room) e funcionam offline — internet é usada só para checar atualização.
 - Preferências (tema, biometria) persistidas entre sessões.
 
@@ -48,6 +49,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.8.2** | Atualização obrigatória via marcador `minVersao:` na release; releases antigas marcadas como pré-release no GitHub |
 | **1.8.1** | Correção do crash de alarme exato no Android 14+ (USE_EXACT_ALARM + fallback aproximado); histórico de erros permanente com data/hora em Ajustes |
 | **1.8** | Aviso "Hora de ir embora!" com vibração na previsão de fim da jornada; linha do tempo somente leitura (correções só em Ajustes); paleta de cores refinada |
 | **1.7** | Visual profissional: painel do dia (chip de status + cartões Trabalhado/Restante/Fim previsto), botão de registro redesenhado, verde/âmbar semânticos, contagem de dias no Histórico e ícones tonais nos Ajustes |
