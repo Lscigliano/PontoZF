@@ -7,10 +7,11 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 ## Funcionalidades
 
 ### Registro de ponto (aba Hoje)
-- **Painel do dia**: chip de situação com cor semântica (verde "Trabalhando desde 08:01", âmbar "Em intervalo", azul "Jornada concluída") e três cartões de resumo — **Trabalhado**, **Restante** e **Fim previsto** — atualizados ao vivo.
+- **Painel do dia**: chip de situação com cor semântica (verde "Trabalhando desde 08:01", âmbar "Em intervalo", azul "Jornada concluída") e três cartões de resumo — **Trabalhado**, **Restante** (ou **Hora extra**, quando a jornada já passou de 8h48) e **Fim previsto** — atualizados ao vivo.
 - **Registrar Ponto com um toque**: botão em destaque com ícone (que vira uma digital quando a biometria está ativa); grava exatamente a hora atual do celular.
 - **Confirmação por digital (opcional)**: com a opção ativa (aba Ajustes), o leitor de digital aparece na tela e o ponto só é gravado após reconhecer a digital. Se o aparelho não tiver biometria disponível, o registro é liberado normalmente.
 - **Bloqueio de retorno de intervalo**: o retorno do almoço exige no mínimo **1 hora e 1 minuto** de descanso (saiu 12:00 → só volta a partir de 13:01). Antes disso o registro é bloqueado, sem exceção — o app informa o horário liberado. O mínimo de 1h01 vale mesmo para quem configura intervalo de 1h30 (menos de 1 hora de descanso gera problema trabalhista).
+- **Limite de 4 pontos por dia**: Entrada, Saída almoço, Retorno almoço e Saída — bater um 5º ponto é bloqueado. Saída registrada depois do horário previsto já conta como **hora extra** automaticamente, sem reabrir a previsão da jornada.
 - **Proteção contra toque duplo**: registros com menos de 1 minuto de diferença são bloqueados.
 - **Relógio ao vivo** com data por extenso em português.
 
@@ -50,6 +51,7 @@ Aplicativo Android para registro de ponto pessoal — rápido, sem propagandas e
 
 | Versão | Novidades |
 |---|---|
+| **1.11** | Corrige a linha do tempo esticando ao bater um 5º ponto após a saída: agora o dia é limitado a 4 pontos (Entrada, Saída almoço, Retorno almoço, Saída), e o cartão **Hora extra** mostra quanto passou das 8h48 |
 | **1.10** | Ajuste de intervalo nos Ajustes: 1h (padrão) ou 1h30 — previsões, "Fim previsto" e lembretes acompanham a escolha; o mínimo legal de 1h01 continua bloqueando nos dois modos |
 | **1.9** | Renomeado de PontoZF para **Easy Point** (nome visível e repositório; identificador `com.pontozf` mantido) |
 | **1.8.2** | Atualização obrigatória via marcador `minVersao:` na release; releases antigas marcadas como pré-release no GitHub |

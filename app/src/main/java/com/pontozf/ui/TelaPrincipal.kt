@@ -106,6 +106,7 @@ fun TelaPrincipal(
                     snackbarHostState.showSnackbar("Ponto já registrado há menos de 1 minuto.")
                 }
                 is ResultadoRegistro.IntervaloCurto -> bloqueio = resultado
+                is ResultadoRegistro.LimiteDiarioAtingido -> bloqueio = resultado
             }
         }
     }
@@ -233,6 +234,12 @@ fun TelaPrincipal(
                 "Retorno bloqueado" to
                     "O intervalo mínimo é de 1 hora e 1 minuto. " +
                     "Você poderá registrar o retorno a partir das ${resultado.liberadoEm.paraHora()}."
+            is ResultadoRegistro.LimiteDiarioAtingido ->
+                "Limite de pontos atingido" to
+                    "Você já registrou os 4 pontos de hoje (Entrada, Saída almoço, " +
+                    "Retorno almoço e Saída). Se saiu depois do horário previsto, " +
+                    "a diferença já conta como hora extra automaticamente. Para " +
+                    "corrigir um horário, use Ajustes → \"Ajustar pontos do dia\"."
             else -> return@let
         }
         AlertDialog(
@@ -270,6 +277,7 @@ private fun ConteudoHoje(
 
     val trabalhado = trabalhadoComAndamento(pontosHoje, agora)
     val restanteMs = (JORNADA_MS - trabalhado.toMillis()).coerceAtLeast(0)
+    val horaExtraMs = (trabalhado.toMillis() - JORNADA_MS).coerceAtLeast(0)
     val fimPrevisto = previsaoFimDaJornada(pontosHoje, intervaloMinutos * 60_000L)
 
     LazyColumn(
@@ -318,7 +326,11 @@ private fun ConteudoHoje(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TileResumo("Trabalhado", trabalhado.formatar())
-                TileResumo("Restante", java.time.Duration.ofMillis(restanteMs).formatar())
+                if (horaExtraMs > 0) {
+                    TileResumo("Hora extra", java.time.Duration.ofMillis(horaExtraMs).formatar())
+                } else {
+                    TileResumo("Restante", java.time.Duration.ofMillis(restanteMs).formatar())
+                }
                 TileResumo("Fim previsto", fimPrevisto?.paraHora() ?: "—")
             }
         }

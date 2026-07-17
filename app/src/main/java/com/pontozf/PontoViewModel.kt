@@ -45,6 +45,9 @@ const val INTERVALO_1H30_MIN = 90
 /** Bloqueio de toque duplo acidental no botão. */
 const val BLOQUEIO_TOQUE_DUPLO_MS = 60 * 1000L
 
+/** Entrada, Saída almoço, Retorno almoço, Saída trabalho: só 4 pontos por dia. */
+const val MAXIMO_PONTOS_DIA = 4
+
 enum class Tema { SISTEMA, CLARO, ESCURO }
 
 /**
@@ -58,6 +61,8 @@ sealed interface ResultadoRegistro {
     data object ToqueDuplo : ResultadoRegistro
     /** Retorno de intervalo com menos de 1h01 de descanso: bloqueado. */
     data class IntervaloCurto(val liberadoEm: Long) : ResultadoRegistro
+    /** Os 4 pontos do dia (Entrada, Saída almoço, Retorno almoço, Saída) já foram batidos. */
+    data object LimiteDiarioAtingido : ResultadoRegistro
 }
 
 class PontoViewModel(app: Application) : AndroidViewModel(app) {
@@ -190,6 +195,10 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
      * - Retorno de intervalo com menos de 1h01 de descanso: bloqueado.
      *   O bloqueio de 1h01 vale mesmo para quem configurou intervalo de 1h30
      *   — quem faz 1h30 pode voltar antes, mas nunca antes de 1h01.
+     * - Mais de 4 pontos no dia: bloqueado. Bater de novo depois da saída
+     *   reabria a previsão da jornada como se fosse uma nova entrada,
+     *   esticando a linha do tempo. Saída batida depois do horário previsto
+     *   já conta como hora extra sozinha, pela diferença real entre os pontos.
      *
      * Situações legítimas fora das regras (saída antecipada autorizada,
      * entrada esquecida etc.) são resolvidas pelo registro manual em Ajustes.
@@ -199,6 +208,11 @@ class PontoViewModel(app: Application) : AndroidViewModel(app) {
             val agora = System.currentTimeMillis()
             val pontosHoje = pontosDeHoje()
             val ultimo = pontosHoje.lastOrNull()
+
+            if (pontosHoje.size >= MAXIMO_PONTOS_DIA) {
+                aoResultado(ResultadoRegistro.LimiteDiarioAtingido)
+                return@launch
+            }
 
             if (ultimo != null && agora - ultimo.timestamp < BLOQUEIO_TOQUE_DUPLO_MS) {
                 aoResultado(ResultadoRegistro.ToqueDuplo)
